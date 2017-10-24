@@ -21,14 +21,13 @@ limitations under the License.
 package v1alpha1
 
 import (
-	unsafe "unsafe"
-
 	types "github.com/appscode/go/encoding/json/types"
 	kubedb "github.com/k8sdb/apimachinery/apis/kubedb"
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	unsafe "unsafe"
 )
 
 func init() {
@@ -569,7 +568,7 @@ func Convert_kubedb_MongoDBList_To_v1alpha1_MongoDBList(in *kubedb.MongoDBList, 
 }
 
 func autoConvert_v1alpha1_MongoDBSpec_To_kubedb_MongoDBSpec(in *MongoDBSpec, out *kubedb.MongoDBSpec, s conversion.Scope) error {
-	out.Version = in.Version
+	out.Version = types.StrYo(in.Version)
 	out.Replicas = in.Replicas
 	out.Storage = (*core_v1.PersistentVolumeClaimSpec)(unsafe.Pointer(in.Storage))
 	out.DatabaseSecret = (*core_v1.SecretVolumeSource)(unsafe.Pointer(in.DatabaseSecret))
@@ -591,7 +590,7 @@ func Convert_v1alpha1_MongoDBSpec_To_kubedb_MongoDBSpec(in *MongoDBSpec, out *ku
 }
 
 func autoConvert_kubedb_MongoDBSpec_To_v1alpha1_MongoDBSpec(in *kubedb.MongoDBSpec, out *MongoDBSpec, s conversion.Scope) error {
-	out.Version = in.Version
+	out.Version = types.StrYo(in.Version)
 	out.Replicas = in.Replicas
 	out.Storage = (*core_v1.PersistentVolumeClaimSpec)(unsafe.Pointer(in.Storage))
 	out.DatabaseSecret = (*core_v1.SecretVolumeSource)(unsafe.Pointer(in.DatabaseSecret))

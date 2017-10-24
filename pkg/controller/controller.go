@@ -6,15 +6,15 @@ import (
 
 	"github.com/appscode/go/hold"
 	"github.com/appscode/go/log"
-	pcm "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1alpha1"
-	tapi "github.com/k8sdb/apimachinery/apis/kubedb/v1alpha1"
-	tcs "github.com/k8sdb/apimachinery/client/typed/kubedb/v1alpha1"
+	pcm "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
+	api "github.com/k8sdb/apimachinery/apis/kubedb/v1alpha1"
+	cs "github.com/k8sdb/apimachinery/client/typed/kubedb/v1alpha1"
 	kutildb "github.com/k8sdb/apimachinery/client/typed/kubedb/v1alpha1/util"
 	amc "github.com/k8sdb/apimachinery/pkg/controller"
 	"github.com/k8sdb/apimachinery/pkg/eventer"
 	core "k8s.io/api/core/v1"
-	extensionsobj "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	crd_api "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -42,9 +42,9 @@ type Options struct {
 type Controller struct {
 	*amc.Controller
 	// Api Extension Client
-	ApiExtKubeClient apiextensionsclient.Interface
+	ApiExtKubeClient crd_cs.ApiextensionsV1beta1Interface
 	// Prometheus client
-	promClient pcm.MonitoringV1alpha1Interface
+	promClient pcm.MonitoringV1Interface
 	// Cron Controller
 	cronController amc.CronControllerInterface
 	// Event Recorder
@@ -60,9 +60,9 @@ var _ amc.Deleter = &Controller{}
 
 func New(
 	client kubernetes.Interface,
-	apiExtKubeClient apiextensionsclient.Interface,
-	extClient tcs.KubedbV1alpha1Interface,
-	promClient pcm.MonitoringV1alpha1Interface,
+	apiExtKubeClient crd_cs.ApiextensionsV1beta1Interface,
+	extClient cs.KubedbV1alpha1Interface,
+	promClient pcm.MonitoringV1Interface,
 	cronController amc.CronControllerInterface,
 	opt Options,
 ) *Controller {
@@ -123,11 +123,11 @@ func (c *Controller) watchMongoDB() {
 
 	_, cacheController := cache.NewInformer(
 		lw,
-		&tapi.MongoDB{},
+		&api.MongoDB{},
 		c.syncPeriod,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				mongodb := obj.(*tapi.MongoDB)
+				mongodb := obj.(*api.MongoDB)
 				kutildb.AssignTypeKind(mongodb)
 				if mongodb.Status.CreationTime == nil {
 					if err := c.create(mongodb); err != nil {
@@ -137,18 +137,18 @@ func (c *Controller) watchMongoDB() {
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
-				mongodb := obj.(*tapi.MongoDB)
+				mongodb := obj.(*api.MongoDB)
 				kutildb.AssignTypeKind(mongodb)
 				if err := c.pause(mongodb); err != nil {
 					log.Errorln(err)
 				}
 			},
 			UpdateFunc: func(old, new interface{}) {
-				oldObj, ok := old.(*tapi.MongoDB)
+				oldObj, ok := old.(*api.MongoDB)
 				if !ok {
 					return
 				}
-				newObj, ok := new.(*tapi.MongoDB)
+				newObj, ok := new.(*api.MongoDB)
 				if !ok {
 					return
 				}
@@ -168,7 +168,7 @@ func (c *Controller) watchMongoDB() {
 func (c *Controller) watchDatabaseSnapshot() {
 	labelMap := map[string]string{
 		// TODO: Use appropriate ResourceKind.
-		tapi.LabelDatabaseKind: tapi.ResourceKindMongoDB,
+		api.LabelDatabaseKind: api.ResourceKindMongoDB,
 	}
 	// Watch with label selector
 	lw := &cache.ListWatch{
@@ -192,7 +192,7 @@ func (c *Controller) watchDatabaseSnapshot() {
 func (c *Controller) watchDeletedDatabase() {
 	labelMap := map[string]string{
 		// TODO: Use appropriate ResourceKind.
-		tapi.LabelDatabaseKind: tapi.ResourceKindMongoDB,
+		api.LabelDatabaseKind: api.ResourceKindMongoDB,
 	}
 	// Watch with label selector
 	lw := &cache.ListWatch{
@@ -217,8 +217,8 @@ func (c *Controller) ensureCustomResourceDefinition() {
 	log.Infoln("Ensuring CustomResourceDefinition...")
 
 	// TODO: Use appropriate ResourceType.
-	resourceName := tapi.ResourceTypeMongoDB + "." + tapi.SchemeGroupVersion.Group
-	if _, err := c.ApiExtKubeClient.ApiextensionsV1beta1().CustomResourceDefinitions().Get(resourceName, metav1.GetOptions{}); err != nil {
+	resourceName := api.ResourceTypeMongoDB + "." + api.SchemeGroupVersion.Group
+	if _, err := c.ApiExtKubeClient.CustomResourceDefinitions().Get(resourceName, metav1.GetOptions{}); err != nil {
 		if !kerr.IsNotFound(err) {
 			log.Fatalln(err)
 		}
@@ -226,32 +226,32 @@ func (c *Controller) ensureCustomResourceDefinition() {
 		return
 	}
 
-	crd := &extensionsobj.CustomResourceDefinition{
+	crd := &crd_api.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: resourceName,
 			Labels: map[string]string{
 				"app": "kubedb",
 			},
 		},
-		Spec: extensionsobj.CustomResourceDefinitionSpec{
-			Group:   tapi.SchemeGroupVersion.Group,
-			Version: tapi.SchemeGroupVersion.Version,
-			Scope:   extensionsobj.NamespaceScoped,
-			Names: extensionsobj.CustomResourceDefinitionNames{
+		Spec: crd_api.CustomResourceDefinitionSpec{
+			Group:   api.SchemeGroupVersion.Group,
+			Version: api.SchemeGroupVersion.Version,
+			Scope:   crd_api.NamespaceScoped,
+			Names: crd_api.CustomResourceDefinitionNames{
 				// TODO: Use appropriate const.
-				Plural:     tapi.ResourceTypeMongoDB,
-				Kind:       tapi.ResourceKindMongoDB,
-				ShortNames: []string{tapi.ResourceCodeMongoDB},
+				Plural:     api.ResourceTypeMongoDB,
+				Kind:       api.ResourceKindMongoDB,
+				ShortNames: []string{api.ResourceCodeMongoDB},
 			},
 		},
 	}
 
-	if _, err := c.ApiExtKubeClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd); err != nil {
+	if _, err := c.ApiExtKubeClient.CustomResourceDefinitions().Create(crd); err != nil {
 		log.Fatalln(err)
 	}
 }
 
-func (c *Controller) pushFailureEvent(mongodb *tapi.MongoDB, reason string) {
+func (c *Controller) pushFailureEvent(mongodb *api.MongoDB, reason string) {
 	c.recorder.Eventf(
 		mongodb.ObjectReference(),
 		core.EventTypeWarning,
@@ -261,8 +261,8 @@ func (c *Controller) pushFailureEvent(mongodb *tapi.MongoDB, reason string) {
 		reason,
 	)
 
-	_, err := kutildb.TryPatchMongoDB(c.ExtClient, mongodb.ObjectMeta, func(in *tapi.MongoDB) *tapi.MongoDB {
-		in.Status.Phase = tapi.DatabasePhaseFailed
+	_, err := kutildb.TryPatchMongoDB(c.ExtClient, mongodb.ObjectMeta, func(in *api.MongoDB) *api.MongoDB {
+		in.Status.Phase = api.DatabasePhaseFailed
 		in.Status.Reason = reason
 		return in
 	})

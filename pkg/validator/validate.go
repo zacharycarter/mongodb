@@ -17,7 +17,7 @@ func ValidateMongoDB(client kubernetes.Interface, mongodb *tapi.MongoDB) error {
 	}
 
 	// Set Database Image version
-	version := mongodb.Spec.Version
+	version := string(mongodb.Spec.Version)
 	// TODO: docker.ImageMongoDB should hold correct image name
 	if err := docker.CheckDockerImageVersion(docker.ImageMongoDB, version); err != nil {
 		return fmt.Errorf(`Image %v:%v not found`, docker.ImageMongoDB, version)

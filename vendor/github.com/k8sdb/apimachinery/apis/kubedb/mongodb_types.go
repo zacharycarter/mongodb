@@ -1,12 +1,13 @@
 package kubedb
 
 import (
+	"github.com/appscode/go/encoding/json/types"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	ResourceCodeMongoDB = "x"
+	ResourceCodeMongoDB = "mn"
 	ResourceKindMongoDB = "MongoDB"
 	ResourceNameMongoDB = "mongodb"
 	ResourceTypeMongoDB = "mongodbs"
@@ -25,7 +26,7 @@ type MongoDB struct {
 
 type MongoDBSpec struct {
 	// Version of MongoDB to be deployed.
-	Version string `json:"version,omitempty"`
+	Version types.StrYo `json:"version,omitempty"`
 	// Number of instances to deploy for a MongoDB database.
 	Replicas int32 `json:"replicas,omitempty"`
 	// Storage spec to specify how storage shall be used.
