@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/appscode/go/log"
-	tapi "github.com/k8sdb/apimachinery/apis/kubedb/v1alpha1"
+	api "github.com/k8sdb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/k8sdb/apimachinery/pkg/docker"
 	"github.com/k8sdb/apimachinery/pkg/storage"
 	amv "github.com/k8sdb/apimachinery/pkg/validator"
@@ -19,7 +19,7 @@ const (
 	snapshotType_DumpBackup = "dump-backup"
 )
 
-func (c *Controller) ValidateSnapshot(snapshot *tapi.Snapshot) error {
+func (c *Controller) ValidateSnapshot(snapshot *api.Snapshot) error {
 	// Database name can't empty
 	databaseName := snapshot.Spec.DatabaseName
 	if databaseName == "" {
@@ -33,7 +33,7 @@ func (c *Controller) ValidateSnapshot(snapshot *tapi.Snapshot) error {
 	return amv.ValidateSnapshotSpec(c.Client, snapshot.Spec.SnapshotStorageSpec, snapshot.Namespace)
 }
 
-func (c *Controller) GetDatabase(snapshot *tapi.Snapshot) (runtime.Object, error) {
+func (c *Controller) GetDatabase(snapshot *api.Snapshot) (runtime.Object, error) {
 	mongodb, err := c.ExtClient.MongoDBs(snapshot.Namespace).Get(snapshot.Spec.DatabaseName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -42,12 +42,12 @@ func (c *Controller) GetDatabase(snapshot *tapi.Snapshot) (runtime.Object, error
 	return mongodb, nil
 }
 
-func (c *Controller) GetSnapshotter(snapshot *tapi.Snapshot) (*batch.Job, error) {
+func (c *Controller) GetSnapshotter(snapshot *api.Snapshot) (*batch.Job, error) {
 	databaseName := snapshot.Spec.DatabaseName
 	jobName := snapshot.OffshootName()
 	jobLabel := map[string]string{
-		tapi.LabelDatabaseName: databaseName,
-		tapi.LabelJobType:      SnapshotProcess_Backup,
+		api.LabelDatabaseName: databaseName,
+		api.LabelJobType:      SnapshotProcess_Backup,
 	}
 	backupSpec := snapshot.Spec.SnapshotStorageSpec
 	bucket, err := backupSpec.Container()
@@ -92,7 +92,10 @@ func (c *Controller) GetSnapshotter(snapshot *tapi.Snapshot) (*batch.Job, error)
 							},
 							Resources: snapshot.Spec.Resources,
 							VolumeMounts: []core.VolumeMount{
-								//TODO: Add Secret volume if necessary
+								{
+									Name:      "secret",
+									MountPath: "/srv/" + api.ResourceNameMySQL + "/secrets",
+								},
 								{
 									Name:      persistentVolume.Name,
 									MountPath: "/var/" + snapshotType_DumpBackup + "/",
@@ -106,8 +109,14 @@ func (c *Controller) GetSnapshotter(snapshot *tapi.Snapshot) (*batch.Job, error)
 						},
 					},
 					Volumes: []core.Volume{
-						//TODO: Add secret volume if necessary
-						// Check postgres repository for example
+						{
+							Name: "secret",
+							VolumeSource: core.VolumeSource{
+								Secret: &core.SecretVolumeSource{
+									SecretName: mongodb.Spec.DatabaseSecret.SecretName,
+								},
+							},
+						},
 						{
 							Name:         persistentVolume.Name,
 							VolumeSource: persistentVolume.VolumeSource,
@@ -139,7 +148,7 @@ func (c *Controller) GetSnapshotter(snapshot *tapi.Snapshot) (*batch.Job, error)
 	return job, nil
 }
 
-func (c *Controller) WipeOutSnapshot(snapshot *tapi.Snapshot) error {
+func (c *Controller) WipeOutSnapshot(snapshot *api.Snapshot) error {
 	return c.DeleteSnapshotData(snapshot)
 }
 
