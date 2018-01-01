@@ -24,7 +24,7 @@ import (
 	unsafe "unsafe"
 
 	types "github.com/appscode/go/encoding/json/types"
-	api "github.com/appscode/kutil/tools/monitoring/api"
+	api "github.com/appscode/kube-mon/api"
 	kubedb "github.com/kubedb/apimachinery/apis/kubedb"
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -583,7 +583,8 @@ func Convert_kubedb_InitSpec_To_v1alpha1_InitSpec(in *kubedb.InitSpec, out *Init
 
 func autoConvert_v1alpha1_LocalSpec_To_kubedb_LocalSpec(in *LocalSpec, out *kubedb.LocalSpec, s conversion.Scope) error {
 	out.VolumeSource = in.VolumeSource
-	out.Path = in.Path
+	out.MountPath = in.MountPath
+	out.SubPath = in.SubPath
 	return nil
 }
 
@@ -594,7 +595,8 @@ func Convert_v1alpha1_LocalSpec_To_kubedb_LocalSpec(in *LocalSpec, out *kubedb.L
 
 func autoConvert_kubedb_LocalSpec_To_v1alpha1_LocalSpec(in *kubedb.LocalSpec, out *LocalSpec, s conversion.Scope) error {
 	out.VolumeSource = in.VolumeSource
-	out.Path = in.Path
+	out.MountPath = in.MountPath
+	out.SubPath = in.SubPath
 	return nil
 }
 
@@ -1116,9 +1118,7 @@ func autoConvert_v1alpha1_PostgresSpec_To_kubedb_PostgresSpec(in *PostgresSpec, 
 	out.Replicas = in.Replicas
 	out.Standby = kubedb.StandbyMode(in.Standby)
 	out.Streaming = kubedb.StreamingMode(in.Streaming)
-	if err := Convert_v1alpha1_PostgresArchiverSpec_To_kubedb_PostgresArchiverSpec(&in.Archiver, &out.Archiver, s); err != nil {
-		return err
-	}
+	out.Archiver = (*kubedb.PostgresArchiverSpec)(unsafe.Pointer(in.Archiver))
 	out.DatabaseSecret = (*core_v1.SecretVolumeSource)(unsafe.Pointer(in.DatabaseSecret))
 	out.Storage = (*core_v1.PersistentVolumeClaimSpec)(unsafe.Pointer(in.Storage))
 	out.NodeSelector = *(*map[string]string)(unsafe.Pointer(&in.NodeSelector))
@@ -1143,9 +1143,7 @@ func autoConvert_kubedb_PostgresSpec_To_v1alpha1_PostgresSpec(in *kubedb.Postgre
 	out.Replicas = in.Replicas
 	out.Standby = StandbyMode(in.Standby)
 	out.Streaming = StreamingMode(in.Streaming)
-	if err := Convert_kubedb_PostgresArchiverSpec_To_v1alpha1_PostgresArchiverSpec(&in.Archiver, &out.Archiver, s); err != nil {
-		return err
-	}
+	out.Archiver = (*PostgresArchiverSpec)(unsafe.Pointer(in.Archiver))
 	out.DatabaseSecret = (*core_v1.SecretVolumeSource)(unsafe.Pointer(in.DatabaseSecret))
 	out.Storage = (*core_v1.PersistentVolumeClaimSpec)(unsafe.Pointer(in.Storage))
 	out.NodeSelector = *(*map[string]string)(unsafe.Pointer(&in.NodeSelector))
@@ -1580,7 +1578,6 @@ func autoConvert_v1alpha1_SnapshotSpec_To_kubedb_SnapshotSpec(in *SnapshotSpec, 
 	if err := Convert_v1alpha1_SnapshotStorageSpec_To_kubedb_SnapshotStorageSpec(&in.SnapshotStorageSpec, &out.SnapshotStorageSpec, s); err != nil {
 		return err
 	}
-	out.Type = kubedb.SnapshotType(in.Type)
 	out.Resources = in.Resources
 	return nil
 }
@@ -1595,7 +1592,6 @@ func autoConvert_kubedb_SnapshotSpec_To_v1alpha1_SnapshotSpec(in *kubedb.Snapsho
 	if err := Convert_kubedb_SnapshotStorageSpec_To_v1alpha1_SnapshotStorageSpec(&in.SnapshotStorageSpec, &out.SnapshotStorageSpec, s); err != nil {
 		return err
 	}
-	out.Type = SnapshotType(in.Type)
 	out.Resources = in.Resources
 	return nil
 }
