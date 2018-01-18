@@ -5,6 +5,7 @@ import (
 
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
+	mon_api "github.com/appscode/kube-mon/api"
 	"github.com/appscode/kutil"
 	app_util "github.com/appscode/kutil/apps/v1beta1"
 	core_util "github.com/appscode/kutil/core/v1"
@@ -82,7 +83,7 @@ func (c *Controller) checkStatefulSet(mongodb *api.MongoDB) error {
 	}
 
 	if statefulSet.Labels[api.LabelDatabaseKind] != api.ResourceKindMongoDB {
-		return fmt.Errorf(`Intended statefulSet "%v" already exists`, mongodb.OffshootName())
+		return fmt.Errorf(`intended statefulSet "%v" already exists`, mongodb.OffshootName())
 	}
 
 	return nil
@@ -119,16 +120,14 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			},
 			Resources: mongodb.Spec.Resources,
 		})
-		if mongodb.Spec.Monitor != nil &&
-			mongodb.Spec.Monitor.Agent == api.AgentCoreosPrometheus &&
-			mongodb.Spec.Monitor.Prometheus != nil {
+		if mongodb.GetMonitoringVendor() == mon_api.VendorPrometheus {
 			in.Spec.Template.Spec.Containers = core_util.UpsertContainer(in.Spec.Template.Spec.Containers, core.Container{
 				Name: "exporter",
-				Args: []string{
+				Args: append([]string{
 					"export",
 					fmt.Sprintf("--address=:%d", mongodb.Spec.Monitor.Prometheus.Port),
-					"--v=3",
-				},
+					fmt.Sprintf("--analytics=%v", c.opt.EnableAnalytics),
+				}, c.opt.LoggerOptions.ToFlags()...),
 				Image: c.opt.Docker.GetOperatorImageWithTag(mongodb),
 				Ports: []core.ContainerPort{
 					{
@@ -137,7 +136,25 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 						ContainerPort: mongodb.Spec.Monitor.Prometheus.Port,
 					},
 				},
+				VolumeMounts: []core.VolumeMount{
+					{
+						Name:      "db-secret",
+						MountPath: ExporterSecretPath,
+						ReadOnly:  true,
+					},
+				},
 			})
+			in.Spec.Template.Spec.Volumes = core_util.UpsertVolume(
+				in.Spec.Template.Spec.Volumes,
+				core.Volume{
+					Name: "db-secret",
+					VolumeSource: core.VolumeSource{
+						Secret: &core.SecretVolumeSource{
+							SecretName: mongodb.Spec.DatabaseSecret.SecretName,
+						},
+					},
+				},
+			)
 		}
 		// Set Admin Secret as MYSQL_ROOT_PASSWORD env variable
 		in = upsertEnv(in, mongodb)
@@ -153,7 +170,6 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 		in.Spec.Template.Spec.ImagePullSecrets = mongodb.Spec.ImagePullSecrets
 
 		in.Spec.UpdateStrategy.Type = apps.RollingUpdateStatefulSetStrategyType
-
 		return in
 	})
 }
@@ -223,7 +239,7 @@ func upsertEnv(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Statef
 					LocalObjectReference: core.LocalObjectReference{
 						Name: mongodb.Spec.DatabaseSecret.SecretName,
 					},
-					Key: keyMongoDBPassword,
+					Key: KeyMongoDBPassword,
 				},
 			},
 		},
