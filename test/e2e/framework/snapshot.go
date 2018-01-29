@@ -49,7 +49,7 @@ func (f *Framework) EventuallySnapshotPhase(meta metav1.ObjectMeta) GomegaAsyncA
 			Expect(snapshot.Status.Phase).ToNot(Equal(api.SnapshotPhaseFailed))
 			return snapshot.Status.Phase
 		},
-		time.Minute*5,
+		time.Minute*15,
 		time.Second*5,
 	)
 }
@@ -82,7 +82,7 @@ func (f *Framework) EventuallySnapshotCount(meta metav1.ObjectMeta) GomegaAsyncA
 
 			return len(snapshotList.Items)
 		},
-		time.Minute*10,
+		time.Minute*15,
 		time.Second*5,
 	)
 }
@@ -135,8 +135,14 @@ func (f *Framework) CleanSnapshot() {
 	}
 	for _, s := range snapshotList.Items {
 		util.PatchSnapshot(f.extClient, &s, func(in *api.Snapshot) *api.Snapshot {
-			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, "kubedb.com")
+			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, api.GenericKey)
 			return in
 		})
+	}
+	deletePolicy := metav1.DeletePropagationBackground
+	if err := f.extClient.Snapshots(f.namespace).DeleteCollection(&metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}, metav1.ListOptions{}); err != nil {
+		return
 	}
 }

@@ -38,7 +38,7 @@ func init() {
 }
 
 const (
-	TIMEOUT = 30 * time.Minute
+	TIMEOUT = 20 * time.Minute
 )
 
 var (
@@ -74,7 +74,7 @@ var _ = BeforeSuite(func() {
 		log.Fatalln(err)
 	}
 	// Framework
-	root = framework.New(kubeClient, extClient, storageClass)
+	root = framework.New(config, kubeClient, extClient, storageClass)
 
 	By("Using namespace " + root.Namespace())
 
@@ -94,6 +94,7 @@ var _ = BeforeSuite(func() {
 		OperatorNamespace: root.Namespace(),
 		GoverningService:  api.DatabaseNamePrefix,
 		AnalyticsClientID: "$kubedb$mongodb$e2e",
+		MaxNumRequeues:    0,
 	}
 
 	// Controller

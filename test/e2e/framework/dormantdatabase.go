@@ -41,7 +41,7 @@ func (f *Framework) EventuallyDormantDatabase(meta metav1.ObjectMeta) GomegaAsyn
 			}
 			return true
 		},
-		time.Minute*5,
+		time.Minute*10,
 		time.Second*5,
 	)
 }
@@ -58,7 +58,7 @@ func (f *Framework) EventuallyDormantDatabaseStatus(meta metav1.ObjectMeta) Gome
 			}
 			return drmn.Status.Phase
 		},
-		time.Minute*5,
+		time.Minute*10,
 		time.Second*5,
 	)
 }
@@ -70,8 +70,14 @@ func (f *Framework) CleanDormantDatabase() {
 	}
 	for _, d := range dormantDatabaseList.Items {
 		util.PatchDormantDatabase(f.extClient, &d, func(in *api.DormantDatabase) *api.DormantDatabase {
-			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, "kubedb.com")
+			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, api.GenericKey)
 			return in
 		})
+	}
+	deletePolicy := metav1.DeletePropagationBackground
+	if err := f.extClient.DormantDatabases(f.namespace).DeleteCollection(&metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}, metav1.ListOptions{}); err != nil {
+		return
 	}
 }

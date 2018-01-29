@@ -63,7 +63,7 @@ func (f *Framework) EventuallyMongoDB(meta metav1.ObjectMeta) GomegaAsyncAsserti
 			}
 			return true
 		},
-		time.Minute*5,
+		time.Minute*10,
 		time.Second*5,
 	)
 }
@@ -75,7 +75,7 @@ func (f *Framework) EventuallyMongoDBRunning(meta metav1.ObjectMeta) GomegaAsync
 			Expect(err).NotTo(HaveOccurred())
 			return mongodb.Status.Phase == api.DatabasePhaseRunning
 		},
-		time.Minute*5,
+		time.Minute*15,
 		time.Second*5,
 	)
 }
@@ -87,8 +87,14 @@ func (f *Framework) CleanMongoDB() {
 	}
 	for _, e := range mongodbList.Items {
 		util.PatchMongoDB(f.extClient, &e, func(in *api.MongoDB) *api.MongoDB {
-			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, "kubedb.com")
+			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, api.GenericKey)
 			return in
 		})
+	}
+	deletePolicy := metav1.DeletePropagationForeground
+	if err := f.extClient.MongoDBs(f.namespace).DeleteCollection(&metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}, metav1.ListOptions{}); err != nil {
+		return
 	}
 }

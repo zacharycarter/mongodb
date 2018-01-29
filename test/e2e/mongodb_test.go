@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/appscode/go/types"
+	meta_util "github.com/appscode/kutil/meta"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/mongodb/test/e2e/framework"
 	"github.com/kubedb/mongodb/test/e2e/matcher"
@@ -103,7 +104,41 @@ var _ = Describe("MongoDB", func() {
 						StorageClassName: types.StringP(f.StorageClass),
 					}
 				})
-				It("should run successfully", shouldSuccessfullyRunning)
+				It("should run successfully", func() {
+					if skipMessage != "" {
+						Skip(skipMessage)
+					}
+					// Create MySQL
+					createAndWaitForRunning()
+
+					By("Insert Document Inside DB")
+					f.EventuallyInsertDocument(mongodb.ObjectMeta).Should(BeTrue())
+
+					By("Checking Inserted Document")
+					f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
+					By("Delete mongodb")
+					err = f.DeleteMongoDB(mongodb.ObjectMeta)
+					Expect(err).NotTo(HaveOccurred())
+
+					By("Wait for mongodb to be paused")
+					f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
+
+					_, err = f.PatchDormantDatabase(mongodb.ObjectMeta, func(in *api.DormantDatabase) *api.DormantDatabase {
+						in.Spec.Resume = true
+						return in
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					By("Wait for DormantDatabase to be deleted")
+					f.EventuallyDormantDatabase(mongodb.ObjectMeta).Should(BeFalse())
+
+					By("Wait for Running mongodb")
+					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
+
+					By("Checking Inserted Document")
+					f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+				})
 			})
 		})
 
@@ -160,7 +195,7 @@ var _ = Describe("MongoDB", func() {
 				f.CreateSnapshot(snapshot)
 
 				By("Check for Successed snapshot")
-				f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSuccessed))
+				f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
 
 				if !skipDataCheck {
 					By("Check for snapshot data")
@@ -279,6 +314,18 @@ var _ = Describe("MongoDB", func() {
 		})
 
 		Context("Initialize", func() {
+			BeforeEach(func() {
+				if f.StorageClass != "" {
+					mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
+						Resources: core.ResourceRequirements{
+							Requests: core.ResourceList{
+								core.ResourceStorage: resource.MustParse("50Mi"),
+							},
+						},
+						StorageClassName: types.StringP(f.StorageClass),
+					}
+				}
+			})
 			Context("With Script", func() {
 				BeforeEach(func() {
 					mongodb.Spec.Init = &api.InitSpec{
@@ -315,6 +362,12 @@ var _ = Describe("MongoDB", func() {
 					// Create and wait for running MongoDB
 					createAndWaitForRunning()
 
+					By("Insert Document Inside DB")
+					f.EventuallyInsertDocument(mongodb.ObjectMeta).Should(BeTrue())
+
+					By("Checking Inserted Document")
+					f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
 					By("Create Secret")
 					f.CreateSecret(secret)
 
@@ -322,7 +375,7 @@ var _ = Describe("MongoDB", func() {
 					f.CreateSnapshot(snapshot)
 
 					By("Check for Successed snapshot")
-					f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSuccessed))
+					f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
 
 					By("Check for snapshot data")
 					f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
@@ -332,6 +385,16 @@ var _ = Describe("MongoDB", func() {
 
 					By("Create mongodb from snapshot")
 					mongodb = f.MongoDB()
+					if f.StorageClass != "" {
+						mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
+							Resources: core.ResourceRequirements{
+								Requests: core.ResourceList{
+									core.ResourceStorage: resource.MustParse("500Mi"),
+								},
+							},
+							StorageClassName: types.StringP(f.StorageClass),
+						}
+					}
 					mongodb.Spec.Init = &api.InitSpec{
 						SnapshotSource: &api.SnapshotSourceSpec{
 							Namespace: snapshot.Namespace,
@@ -342,6 +405,9 @@ var _ = Describe("MongoDB", func() {
 					// Create and wait for running MongoDB
 					createAndWaitForRunning()
 
+					By("Checking Inserted Document")
+					f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
 					// Delete test resource
 					deleteTestResource()
 					mongodb = oldMongoDB
@@ -349,13 +415,26 @@ var _ = Describe("MongoDB", func() {
 					deleteTestResource()
 				})
 			})
-
 		})
 
 		Context("Resume", func() {
-			var usedInitSpec bool
+			var usedInitScript bool
+			var usedInitSnapshot bool
 			BeforeEach(func() {
-				usedInitSpec = false
+				usedInitScript = false
+				usedInitSnapshot = false
+
+				if f.StorageClass == "" {
+					skipMessage = "Missing StorageClassName. Provide as flag to test this."
+				}
+				mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
+					Resources: core.ResourceRequirements{
+						Requests: core.ResourceList{
+							core.ResourceStorage: resource.MustParse("500Mi"),
+						},
+					},
+					StorageClassName: types.StringP(f.StorageClass),
+				}
 			})
 
 			var shouldResumeSuccessfully = func() {
@@ -383,22 +462,28 @@ var _ = Describe("MongoDB", func() {
 				mongodb, err = f.GetMongoDB(mongodb.ObjectMeta)
 				Expect(err).NotTo(HaveOccurred())
 
-				if usedInitSpec {
-					Expect(mongodb.Spec.Init).Should(BeNil())
-					Expect(mongodb.Annotations[api.GenericInitSpec]).ShouldNot(BeEmpty())
+				if usedInitScript {
+					Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+					_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+					Expect(err).To(HaveOccurred())
+				}
+				if usedInitSnapshot {
+					Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+					_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+					Expect(err).NotTo(HaveOccurred())
 				}
 
 				// Delete test resource
 				deleteTestResource()
 			}
 
-			Context("-", func() {
+			XContext("Without Init", func() {
 				It("should resume DormantDatabase successfully", shouldResumeSuccessfully)
 			})
 
 			Context("With Init", func() {
 				BeforeEach(func() {
-					usedInitSpec = true
+					usedInitScript = true
 					mongodb.Spec.Init = &api.InitSpec{
 						ScriptSource: &api.ScriptSourceSpec{
 							VolumeSource: core.VolumeSource{
@@ -439,18 +524,172 @@ var _ = Describe("MongoDB", func() {
 					_, err = f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					if usedInitSpec {
-						Expect(mongodb.Spec.Init).Should(BeNil())
-						Expect(mongodb.Annotations[api.GenericInitSpec]).ShouldNot(BeEmpty())
-					}
-
 					// Delete test resource
 					deleteTestResource()
 				})
 
+				Context("with init", func() {
+					BeforeEach(func() {
+						usedInitScript = true
+						mongodb.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									GitRepo: &core.GitRepoVolumeSource{
+										Repository: "https://github.com/kubedb/mongodb-init-scripts.git",
+										Directory:  ".",
+									},
+								},
+							},
+						}
+					})
+
+					It("should resume DormantDatabase successfully", func() {
+						// Create and wait for running MongoDB
+						createAndWaitForRunning()
+
+						By("Delete mongodb")
+						f.DeleteMongoDB(mongodb.ObjectMeta)
+
+						By("Wait for mongodb to be paused")
+						f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
+
+						// Create MongoDB object again to resume it
+						By("Create MongoDB: " + mongodb.Name)
+						err = f.CreateMongoDB(mongodb)
+						Expect(err).NotTo(HaveOccurred())
+
+						By("Wait for DormantDatabase to be deleted")
+						f.EventuallyDormantDatabase(mongodb.ObjectMeta).Should(BeFalse())
+
+						By("Wait for Running mongodb")
+						f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
+
+						_, err := f.GetMongoDB(mongodb.ObjectMeta)
+						Expect(err).NotTo(HaveOccurred())
+
+						// Delete test resource
+						deleteTestResource()
+						if usedInitScript {
+							Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+							if usedInitScript {
+								Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+								_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+								Expect(err).To(HaveOccurred())
+							}
+						}
+					})
+				})
+
+				Context("With Snapshot Init", func() {
+					var skipDataCheck bool
+					AfterEach(func() {
+						f.DeleteSecret(secret.ObjectMeta)
+					})
+					BeforeEach(func() {
+						skipDataCheck = false
+						usedInitSnapshot = true
+						secret = f.SecretForGCSBackend()
+						snapshot.Spec.StorageSecretName = secret.Name
+						snapshot.Spec.GCS = &api.GCSSpec{
+							Bucket: os.Getenv(GCS_BUCKET_NAME),
+						}
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should resume successfully", func() {
+						// Create and wait for running MongoDB
+						createAndWaitForRunning()
+
+						By("Insert Document Inside DB")
+						f.EventuallyInsertDocument(mongodb.ObjectMeta).Should(BeTrue())
+
+						By("Checking Inserted Document")
+						f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
+						By("Create Secret")
+						f.CreateSecret(secret)
+
+						By("Create Snapshot")
+						f.CreateSnapshot(snapshot)
+
+						By("Check for Successed snapshot")
+						f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
+
+						By("Check for snapshot data")
+						f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
+
+						oldMongoDB, err := f.GetMongoDB(mongodb.ObjectMeta)
+						Expect(err).NotTo(HaveOccurred())
+
+						By("Create mongodb from snapshot")
+						mongodb = f.MongoDB()
+						mongodb = f.MongoDB()
+						if f.StorageClass != "" {
+							mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
+								Resources: core.ResourceRequirements{
+									Requests: core.ResourceList{
+										core.ResourceStorage: resource.MustParse("500Mi"),
+									},
+								},
+								StorageClassName: types.StringP(f.StorageClass),
+							}
+						}
+						mongodb.Spec.Init = &api.InitSpec{
+							SnapshotSource: &api.SnapshotSourceSpec{
+								Namespace: snapshot.Namespace,
+								Name:      snapshot.Name,
+							},
+						}
+
+						// Create and wait for running MongoDB
+						createAndWaitForRunning()
+
+						By("Checking Inserted Document")
+						f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
+						By("Delete mongodb")
+						f.DeleteMongoDB(mongodb.ObjectMeta)
+
+						By("Wait for mongodb to be paused")
+						f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
+
+						// Create MongoDB object again to resume it
+						By("Create MongoDB: " + mongodb.Name)
+						err = f.CreateMongoDB(mongodb)
+						Expect(err).NotTo(HaveOccurred())
+
+						By("Wait for DormantDatabase to be deleted")
+						f.EventuallyDormantDatabase(mongodb.ObjectMeta).Should(BeFalse())
+
+						By("Wait for Running mongodb")
+						f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
+
+						mongodb, err = f.GetMongoDB(mongodb.ObjectMeta)
+						Expect(err).NotTo(HaveOccurred())
+
+						By("Checking Inserted Document")
+						f.EventuallyDocumentExists(mongodb.ObjectMeta).Should(BeTrue())
+
+						if usedInitSnapshot {
+							Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+							_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+							Expect(err).NotTo(HaveOccurred())
+						}
+
+						// Delete test resource
+						deleteTestResource()
+						mongodb = oldMongoDB
+						// Delete test resource
+						deleteTestResource()
+						if !skipDataCheck {
+							By("Check for snapshot data")
+							f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
+						}
+					})
+				})
+
 				Context("Multiple times with init", func() {
 					BeforeEach(func() {
-						usedInitSpec = true
+						usedInitScript = true
 						mongodb.Spec.Init = &api.InitSpec{
 							ScriptSource: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
@@ -467,7 +706,7 @@ var _ = Describe("MongoDB", func() {
 						mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
 							Resources: core.ResourceRequirements{
 								Requests: core.ResourceList{
-									core.ResourceStorage: resource.MustParse("50Mi"),
+									core.ResourceStorage: resource.MustParse("500Mi"),
 								},
 							},
 							StorageClassName: types.StringP(f.StorageClass),
@@ -499,6 +738,12 @@ var _ = Describe("MongoDB", func() {
 
 							_, err := f.GetMongoDB(mongodb.ObjectMeta)
 							Expect(err).NotTo(HaveOccurred())
+
+							if usedInitScript {
+								Expect(mongodb.Spec.Init).ShouldNot(BeNil())
+								_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+								Expect(err).To(HaveOccurred())
+							}
 						}
 
 						// Delete test resource
@@ -565,7 +810,7 @@ var _ = Describe("MongoDB", func() {
 						mongodb.Spec.Storage = &core.PersistentVolumeClaimSpec{
 							Resources: core.ResourceRequirements{
 								Requests: core.ResourceList{
-									core.ResourceStorage: resource.MustParse("50Mi"),
+									core.ResourceStorage: resource.MustParse("500Mi"),
 								},
 							},
 							StorageClassName: types.StringP(f.StorageClass),
