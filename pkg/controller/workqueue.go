@@ -29,7 +29,7 @@ func (c *Controller) initWatcher() {
 	}
 
 	// create the workqueue
-	c.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), api.ResourceNameMongoDB)
+	c.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), api.ResourceSingularMongoDB)
 
 	// Bind the workqueue to a cache with the help of an informer. This way we make sure that
 	// whenever the cache is updated, the MongoDB key is added to the workqueue.
@@ -150,7 +150,7 @@ func (c *Controller) processNextItem() bool {
 	log.Debugln("Finished Processing key:", key)
 	// Report to an external entity that, even after several retries, we could not successfully process this key
 	runtime.HandleError(err)
-	log.Infof("Dropping deployment %q out of the queue: %v", key, err)
+	log.Infof("Dropping MongoDB %q out of the queue: %v", key, err)
 	return true
 }
 

@@ -1,11 +1,11 @@
 package framework
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/appscode/go/crypto/rand"
 	"github.com/appscode/go/encoding/json/types"
-	core_util "github.com/appscode/kutil/core/v1"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
 	. "github.com/onsi/gomega"
@@ -47,7 +47,7 @@ func (f *Framework) PatchMongoDB(meta metav1.ObjectMeta, transform func(*api.Mon
 }
 
 func (f *Framework) DeleteMongoDB(meta metav1.ObjectMeta) error {
-	return f.extClient.MongoDBs(meta.Namespace).Delete(meta.Name, &metav1.DeleteOptions{})
+	return f.extClient.MongoDBs(meta.Namespace).Delete(meta.Name, deleteInBackground())
 }
 
 func (f *Framework) EventuallyMongoDB(meta metav1.ObjectMeta) GomegaAsyncAssertion {
@@ -86,15 +86,14 @@ func (f *Framework) CleanMongoDB() {
 		return
 	}
 	for _, e := range mongodbList.Items {
-		util.PatchMongoDB(f.extClient, &e, func(in *api.MongoDB) *api.MongoDB {
-			in.ObjectMeta = core_util.RemoveFinalizer(in.ObjectMeta, api.GenericKey)
+		if _, _, err := util.PatchMongoDB(f.extClient, &e, func(in *api.MongoDB) *api.MongoDB {
+			in.ObjectMeta.Finalizers = nil
 			return in
-		})
+		}); err != nil {
+			fmt.Printf("error Patching MongoDB. error: %v", err)
+		}
 	}
-	deletePolicy := metav1.DeletePropagationForeground
-	if err := f.extClient.MongoDBs(f.namespace).DeleteCollection(&metav1.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	}, metav1.ListOptions{}); err != nil {
-		return
+	if err := f.extClient.MongoDBs(f.namespace).DeleteCollection(deleteInBackground(), metav1.ListOptions{}); err != nil {
+		fmt.Printf("error in deletion of MongoDB. Error: %v", err)
 	}
 }

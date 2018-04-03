@@ -24,7 +24,7 @@ import:
 - package: github.com/spf13/cobra
   version: master
 - package: github.com/spf13/pflag
-  version: v1.0.0
+  version: master
 - package: k8s.io/api
   version: kubernetes-1.9.0
 - package: k8s.io/apimachinery
@@ -37,6 +37,8 @@ import:
   version: v1.9.0
 - package: github.com/appscode/kutil
   version: release-6.0
+- package: github.com/appscode/kubernetes-webhook-util
+  version: release-6.0
 - package: github.com/appscode/kube-mon
   version: release-6.0
 - package: github.com/hashicorp/go-version
@@ -47,3 +49,7 @@ import:
   version: v1.2.0
 - package: github.com/onsi/ginkgo
   version: v1.4.0
+- package: github.com/kubedb/kubedb-server
+  version: mutate
+- package: k8s.io/kube-aggregator
+  version: kubernetes-1.9.0

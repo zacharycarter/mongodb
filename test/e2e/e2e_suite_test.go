@@ -11,6 +11,7 @@ import (
 	logs "github.com/appscode/go/log/golog"
 	pcm "github.com/coreos/prometheus-operator/pkg/client/monitoring/v1"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
+	"github.com/kubedb/apimachinery/client/clientset/versioned/scheme"
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	snapc "github.com/kubedb/apimachinery/pkg/controller/snapshot"
 	"github.com/kubedb/mongodb/pkg/controller"
@@ -20,8 +21,11 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/client-go/kubernetes"
+	clientSetScheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
+	ka "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
 var (
@@ -33,6 +37,8 @@ var (
 )
 
 func init() {
+	scheme.AddToScheme(clientSetScheme.Scheme)
+
 	flag.StringVar(&storageClass, "storageclass", "standard", "Kubernetes StorageClass name")
 	flag.StringVar(&dockerRegistry, "docker-registry", "kubedb", "User provided docker repository")
 }
@@ -48,6 +54,7 @@ var (
 
 func TestE2e(t *testing.T) {
 	logs.InitLogs()
+	defer logs.FlushLogs()
 	RegisterFailHandler(Fail)
 	SetDefaultEventuallyTimeout(TIMEOUT)
 
@@ -72,12 +79,13 @@ var _ = BeforeSuite(func() {
 	kubeClient := kubernetes.NewForConfigOrDie(config)
 	apiExtKubeClient := crd_cs.NewForConfigOrDie(config)
 	extClient := cs.NewForConfigOrDie(config)
+	kaClient := ka.NewForConfigOrDie(config)
 	promClient, err := pcm.NewForConfig(&prometheusCrdKinds, prometheusCrdGroup, config)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// Framework
-	root = framework.New(config, kubeClient, extClient, storageClass)
+	root = framework.New(config, kubeClient, extClient, kaClient, storageClass)
 
 	By("Using namespace " + root.Namespace())
 
@@ -97,7 +105,8 @@ var _ = BeforeSuite(func() {
 		OperatorNamespace: root.Namespace(),
 		GoverningService:  api.DatabaseNamePrefix,
 		AnalyticsClientID: "$kubedb$mongodb$e2e",
-		MaxNumRequeues:    0,
+		MaxNumRequeues:    3,
+		NumThreads:        5,
 	}
 
 	// Controller
@@ -106,15 +115,28 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	stopCh := genericapiserver.SetupSignalHandler()
+	go root.RunAdmissionServer(kubeconfigPath, stopCh)
+
 	ctrl.Run()
 	root.EventuallyCRD().Should(Succeed())
+	root.EventuallyApiServiceReady().Should(Succeed())
 })
 
 var _ = AfterSuite(func() {
+
+	By("Cleanup Left Overs")
+
+	By("Delete Admission Controller Configs")
+	root.CleanAdmissionConfigs()
+	By("Delete left over MongoDB objects")
 	root.CleanMongoDB()
+	By("Delete left over Dormant Database objects")
 	root.CleanDormantDatabase()
+	By("Delete left over Snapshot objects")
 	root.CleanSnapshot()
+	By("Delete Namespace")
 	err := root.DeleteNamespace()
 	Expect(err).NotTo(HaveOccurred())
-	By("Deleted namespace")
 })
