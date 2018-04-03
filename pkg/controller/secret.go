@@ -27,7 +27,7 @@ func (c *Controller) ensureDatabaseSecret(mongodb *api.MongoDB) error {
 	if mongodb.Spec.DatabaseSecret == nil {
 		secretVolumeSource, err := c.createDatabaseSecret(mongodb)
 		if err != nil {
-			if ref, err := reference.GetReference(clientsetscheme.Scheme, mongodb); err == nil {
+			if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
 				c.recorder.Eventf(
 					ref,
 					core.EventTypeWarning,
@@ -44,7 +44,7 @@ func (c *Controller) ensureDatabaseSecret(mongodb *api.MongoDB) error {
 			return in
 		})
 		if err != nil {
-			if ref, err := reference.GetReference(clientsetscheme.Scheme, mongodb); err == nil {
+			if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
 				c.recorder.Eventf(
 					ref,
 					core.EventTypeWarning,
@@ -75,11 +75,8 @@ func (c *Controller) createDatabaseSecret(mongodb *api.MongoDB) (*core.SecretVol
 
 		secret := &core.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: authSecretName,
-				Labels: map[string]string{
-					api.LabelDatabaseKind: api.ResourceKindMongoDB,
-					api.LabelDatabaseName: mongodb.Name,
-				},
+				Name:   authSecretName,
+				Labels: mongodb.OffshootLabels(),
 			},
 			Type: core.SecretTypeOpaque,
 			StringData: map[string]string{

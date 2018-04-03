@@ -12,7 +12,7 @@ import (
 	cs "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1"
 	kutildb "github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
 	amc "github.com/kubedb/apimachinery/pkg/controller"
-	drmnc "github.com/kubedb/apimachinery/pkg/controller/dormant_database"
+	drmnc "github.com/kubedb/apimachinery/pkg/controller/dormantdatabase"
 	snapc "github.com/kubedb/apimachinery/pkg/controller/snapshot"
 	"github.com/kubedb/apimachinery/pkg/eventer"
 	"github.com/kubedb/mongodb/pkg/docker"
@@ -174,7 +174,7 @@ func (c *Controller) watchDeletedDatabase() {
 }
 
 func (c *Controller) pushFailureEvent(mongodb *api.MongoDB, reason string) {
-	if ref, err := reference.GetReference(clientsetscheme.Scheme, mongodb); err == nil {
+	if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
 		c.recorder.Eventf(
 			ref,
 			core.EventTypeWarning,
@@ -191,7 +191,7 @@ func (c *Controller) pushFailureEvent(mongodb *api.MongoDB, reason string) {
 		return in
 	})
 	if err != nil {
-		if ref, err := reference.GetReference(clientsetscheme.Scheme, mongodb); err == nil {
+		if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
 			c.recorder.Eventf(
 				ref,
 				core.EventTypeWarning,

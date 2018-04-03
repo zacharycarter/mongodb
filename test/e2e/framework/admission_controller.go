@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/appscode/go/log"
-	"github.com/kubedb/kubedb-server/pkg/admission/plugin/dormant-database"
-	"github.com/kubedb/kubedb-server/pkg/admission/plugin/mongodb"
-	"github.com/kubedb/kubedb-server/pkg/admission/plugin/snapshot"
+	"github.com/kubedb/apimachinery/pkg/admission/dormantdatabase"
+	"github.com/kubedb/apimachinery/pkg/admission/snapshot"
 	"github.com/kubedb/kubedb-server/pkg/cmds/server"
+	mgAdmission "github.com/kubedb/mongodb/pkg/admission"
 	. "github.com/onsi/gomega"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,9 +41,10 @@ func (f *Framework) EventuallyApiServiceReady() GomegaAsyncAssertion {
 
 func (f *Framework) RunAdmissionServer(kubeconfigPath string, stopCh <-chan struct{}) {
 	serverOpt := server.NewAdmissionServerOptions(os.Stdout, os.Stderr,
-		&mongodb.MongoDBValidator{}, &mongodb.MongoDBMutator{},
+		&mgAdmission.MongoDBValidator{},
+		&mgAdmission.MongoDBMutator{},
 		&snapshot.SnapshotValidator{},
-		&dormant_database.DormantDatabaseValidator{})
+		&dormantdatabase.DormantDatabaseValidator{})
 
 	serverOpt.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath = kubeconfigPath
 	serverOpt.RecommendedOptions.SecureServing.BindPort = 8443
