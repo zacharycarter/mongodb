@@ -1,5 +1,5 @@
 hash: ed734ae85fc8f1db2bbf72f9fe4aae4468e78aa1c088597ba70cb65fb35ef3cb
-updated: 2018-04-14T10:42:08.912432859-07:00
+updated: 2018-04-16T19:54:21.842742343-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -302,7 +302,7 @@ imports:
 - name: github.com/juju/ratelimit
   version: 5b9ff866471762aa2ab2dced63c9fb6f53921342
 - name: github.com/kubedb/apimachinery
-  version: 2bb66c544a5dc7307cb64893a120f589d139c10d
+  version: eba89443c6accfe90d5dcd89c13fb12242d34d83
   subpackages:
   - apis/kubedb
   - apis/kubedb/v1alpha1
@@ -496,7 +496,7 @@ imports:
   - unicode/norm
   - width
 - name: google.golang.org/api
-  version: fca24fcb41126b846105a93fb9e30f416bdd55ce
+  version: 9c79deebf7496e355d7e95d82d4af1fe4e769b2f
   subpackages:
   - gensupport
   - googleapi
