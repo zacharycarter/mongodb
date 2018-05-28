@@ -1,5 +1,5 @@
 hash: 7054e9f32e5de5e445ae2f4cb44d81c3717c6748f363d77c8b187595c11e55f8
-updated: 2018-05-27T23:06:16.272604704-07:00
+updated: 2018-05-28T02:37:34.556401634-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -223,12 +223,19 @@ imports:
   version: 944e07253867aacae43c04b2e6a239005443f33a
 - name: github.com/ghodss/yaml
   version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
+- name: github.com/globalsign/mgo
+  version: efe0945164a7e582241f37ae8983c075f8f2e870
+  subpackages:
+  - bson
+  - internal/json
+  - internal/sasl
+  - internal/scram
 - name: github.com/go-bongo/bongo
   version: 761759e31d8fed917377aa7085db01d218ce50d8
 - name: github.com/go-bongo/go-dotaccess
   version: ae070a2d2a38fd7233e255ded21fb26fe36b4796
 - name: github.com/go-ini/ini
-  version: 300e940a926eb277d3901b20bdfcc54928ad3642
+  version: d3de07a94d22b4a0972deb4b96d790c2c0ce8333
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -562,8 +569,6 @@ imports:
   subpackages:
   - bson
   - internal/json
-  - internal/sasl
-  - internal/scram
 - name: gopkg.in/natefinch/lumberjack.v2
   version: 20b71e5b60d756d3d2f80def009790325acc2b23
 - name: gopkg.in/robfig/cron.v2
