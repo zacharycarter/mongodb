@@ -14,6 +14,6 @@ $REPO_ROOT/hack/docker/mongo-tools/3.6/make.sh build
 $REPO_ROOT/hack/docker/mongo-tools/3.6/make.sh push
 
 
-# $REPO_ROOT//hack/docker/mg-operator/make.sh build
-# $REPO_ROOT//hack/docker/mg-operator/make.sh push
+# $REPO_ROOT/hack/docker/mg-operator/make.sh build
+# $REPO_ROOT/hack/docker/mg-operator/make.sh push
 
