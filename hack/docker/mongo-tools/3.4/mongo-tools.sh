@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eou pipefail
+set -exou pipefail
 
 # ref: https://stackoverflow.com/a/7069755/244009
 # ref: https://jonalmeida.com/posts/2013/05/26/different-ways-to-implement-flags-in-bash/
@@ -94,7 +94,7 @@ rm -rf *
 
 case "$op" in
     backup)
-        mongodump --host "$DB_HOST" --port $DB_PORT --username "$DB_USER" --password "$DB_PASSWORD" --out "$DB_DATA_DIR"
+        mongodump --host "$DB_HOST"-0 --port $DB_PORT --username "$DB_USER" --password "$DB_PASSWORD" --out "$DB_DATA_DIR" --readPreference secondary
         osm push --enable-analytics="$ENABLE_ANALYTICS" --osmconfig="$OSM_CONFIG_FILE" -c "$DB_BUCKET" "$DB_DATA_DIR" "$DB_FOLDER/$DB_SNAPSHOT"
         ;;
     restore)

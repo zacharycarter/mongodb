@@ -189,7 +189,7 @@ var _ = Describe("MongoDB", func() {
 				}
 			}
 
-			Context("In Local", func() {
+			FContext("In Local", func() {
 				BeforeEach(func() {
 					skipDataCheck = true
 					secret = f.SecretForLocalBackend()
@@ -205,7 +205,7 @@ var _ = Describe("MongoDB", func() {
 				It("should take Snapshot successfully", shouldTakeSnapshot)
 			})
 
-			Context("In S3", func() {
+			FContext("In S3", func() {
 				BeforeEach(func() {
 					secret = f.SecretForS3Backend()
 					snapshot.Spec.StorageSecretName = secret.Name
@@ -217,7 +217,7 @@ var _ = Describe("MongoDB", func() {
 				It("should take Snapshot successfully", shouldTakeSnapshot)
 			})
 
-			Context("In GCS", func() {
+			FContext("In GCS", func() {
 				BeforeEach(func() {
 					secret = f.SecretForGCSBackend()
 					snapshot.Spec.StorageSecretName = secret.Name
