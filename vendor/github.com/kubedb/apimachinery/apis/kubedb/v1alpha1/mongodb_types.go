@@ -76,7 +76,8 @@ type MongoDBClusterMode struct {
 }
 
 type MongoDBReplicaSet struct {
-	Name string `json:"name"`
+	Name          string                   `json:"name"`
+	KeyFileSecret *core.SecretVolumeSource `json:"keyFileSecret,omitempty"`
 }
 
 type MongoDBStatus struct {

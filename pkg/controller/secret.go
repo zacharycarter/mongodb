@@ -19,6 +19,10 @@ const (
 
 	KeyMongoDBUser     = "user"
 	KeyMongoDBPassword = "password"
+	KeyForKeyFile = "key.txt"
+
+	DatabaseSecretSuffix = "-auth"
+	KeyFileSecretSuffix = "-keyfile"
 
 	ExporterSecretPath = "/var/run/secrets/kubedb.com/"
 )
@@ -56,11 +60,49 @@ func (c *Controller) ensureDatabaseSecret(mongodb *api.MongoDB) error {
 		}
 		mongodb.Spec.DatabaseSecret = ms.Spec.DatabaseSecret
 	}
+
+	// keyfile secret for mongodb replication
+	if mongodb.Spec.ClusterMode != nil &&
+		mongodb.Spec.ClusterMode.ReplicaSet != nil &&
+		mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret == nil {
+
+		secretVolumeSource, err := c.createKeyFileSecret(mongodb)
+		if err != nil {
+			if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
+				c.recorder.Eventf(
+					ref,
+					core.EventTypeWarning,
+					eventer.EventReasonFailedToCreate,
+					`Failed to create KeyFile Secret. Reason: %v`,
+					err.Error(),
+				)
+			}
+			return err
+		}
+
+		ms, _, err := util.PatchMongoDB(c.ExtClient, mongodb, func(in *api.MongoDB) *api.MongoDB {
+			in.Spec.ClusterMode.ReplicaSet.KeyFileSecret = secretVolumeSource
+			return in
+		})
+		if err != nil {
+			if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
+				c.recorder.Eventf(
+					ref,
+					core.EventTypeWarning,
+					eventer.EventReasonFailedToUpdate,
+					err.Error(),
+				)
+			}
+			return err
+		}
+		mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret = ms.Spec.ClusterMode.ReplicaSet.KeyFileSecret
+	}
+
 	return nil
 }
 
 func (c *Controller) createDatabaseSecret(mongodb *api.MongoDB) (*core.SecretVolumeSource, error) {
-	authSecretName := mongodb.Name + "-auth"
+	authSecretName := mongodb.Name + DatabaseSecretSuffix
 
 	sc, err := c.checkSecret(authSecretName, mongodb)
 	if err != nil {
@@ -90,6 +132,35 @@ func (c *Controller) createDatabaseSecret(mongodb *api.MongoDB) (*core.SecretVol
 	}
 	return &core.SecretVolumeSource{
 		SecretName: authSecretName,
+	}, nil
+}
+
+func (c *Controller) createKeyFileSecret(mongodb *api.MongoDB) (*core.SecretVolumeSource, error) {
+	tokenSecretName := mongodb.Name + KeyFileSecretSuffix
+
+	sc, err := c.checkSecret(tokenSecretName, mongodb)
+	if err != nil {
+		return nil, err
+	}
+	if sc == nil {
+		randToken := rand.GenerateTokenWithLength(756)
+
+		secret := &core.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   tokenSecretName,
+				Labels: mongodb.OffshootLabels(),
+			},
+			Type: core.SecretTypeOpaque,
+			StringData: map[string]string{
+				KeyForKeyFile : randToken,
+			},
+		}
+		if _, err := c.Client.CoreV1().Secrets(mongodb.Namespace).Create(secret); err != nil {
+			return nil, err
+		}
+	}
+	return &core.SecretVolumeSource{
+		SecretName: tokenSecretName,
 	}, nil
 }
 

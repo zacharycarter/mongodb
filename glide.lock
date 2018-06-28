@@ -1,5 +1,5 @@
-hash: 4776d3258888542dee310c567039f48555983e1242c3c2d529c6a068f85ac680
-updated: 2018-06-28T12:10:17.750012252+06:00
+hash: 3cece78b1504445ea1167572058eabb01d2c7ad53a3f53580716bd7b283630d4
+updated: 2018-06-28T15:35:26.73762249+06:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -9,7 +9,7 @@ imports:
   - compute/metadata
   - internal
 - name: github.com/appscode/go
-  version: 578091d435e848d79527d8b911fdf1dd5423b227
+  version: df3c57fca2bef0e5b7fd085507deb20f18c790df
   subpackages:
   - analytics
   - context
@@ -253,6 +253,7 @@ imports:
   subpackages:
   - jsonpb
   - proto
+  - protoc-gen-go/descriptor
   - ptypes
   - ptypes/any
   - ptypes/duration
@@ -311,7 +312,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 13f86432b882000a51c6e610c620974462691a97
 - name: github.com/kubedb/apimachinery
-  version: 3637d8e33931520660cff188ce315aa7e13edf47
+  version: c2ff9a9e3abeb66bde17f96de2648eaf502d55bb
   subpackages:
   - apis/kubedb
   - apis/kubedb/v1alpha1
@@ -510,13 +511,8 @@ imports:
   version: f51c12702a4d776e4c1fa9b0fabab841babae631
   subpackages:
   - rate
-- name: google.golang.org/api
+- name: google.golang.org/api/storage/v1
   version: 082d671a2a341aa205b22b580fa69747dcc3cdc8
-  subpackages:
-  - gensupport
-  - googleapi
-  - googleapi/internal/uritemplates
-  - storage/v1
 - name: google.golang.org/appengine
   version: b1f26356af11148e710935ed1ac8a7f5702c7612
   subpackages:
@@ -527,14 +523,13 @@ imports:
   - internal/log
   - internal/modules
   - internal/remote_api
-  - internal/urlfetch
-  - urlfetch
+- name: google.golang.org/appengine/urlfetch
+  version: b1f26356af11148e710935ed1ac8a7f5702c7612
 - name: google.golang.org/genproto
   version: 09f6ed296fc66555a25fe4ce95173148778dfa85
   subpackages:
+  - googleapis/api/annotations
   - googleapis/rpc/status
-- name: google.golang.org/genproto/googleapis/api/annotations
-  version: 09f6ed296fc66555a25fe4ce95173148778dfa85
 - name: google.golang.org/grpc
   version: 5b3c4e850e90a4cf6a20ebd46c8b32a0a3afcb9e
   subpackages:
@@ -935,7 +930,7 @@ imports:
   - pkg/client/clientset_generated/clientset/typed/apiregistration/v1
   - pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 - name: k8s.io/kube-openapi
-  version: abfc5fbe1cf87ee697db107fdfd24c32fe4397a8
+  version: 4cac20de16b951c103aa40c4bafbc8cefdd18a12
   subpackages:
   - pkg/builder
   - pkg/common

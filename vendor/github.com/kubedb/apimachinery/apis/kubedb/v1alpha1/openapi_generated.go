@@ -1435,11 +1435,17 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Format: "",
 							},
 						},
+						"keyFileSecret": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("k8s.io/api/core/v1.SecretVolumeSource"),
+							},
+						},
 					},
 					Required: []string{"name"},
 				},
 			},
-			Dependencies: []string{},
+			Dependencies: []string{
+				"k8s.io/api/core/v1.SecretVolumeSource"},
 		},
 		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBSpec": {
 			Schema: spec.Schema{
