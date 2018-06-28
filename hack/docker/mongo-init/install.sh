@@ -18,11 +18,10 @@ echo Installing config scripts into "${WORKDIR_VOLUME}"
 
 mkdir -p "${WORKDIR_VOLUME}"
 cp /peer-finder "${WORKDIR_VOLUME}"/
+cp /on-start.sh "${WORKDIR_VOLUME}"/
 
 # Copy config and other files into related fields.
 # ref: https://github.com/kubernetes/charts/blob/master/stable/mongodb-replicaset/templates/mongodb-statefulset.yaml#L45
-
-cp /on-start.sh /init/
 
 if [ -f "/configdb-readonly/mongod.conf" ]; then
     cp /configdb-readonly/mongod.conf /data/configdb/mongod.conf

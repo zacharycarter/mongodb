@@ -9,6 +9,7 @@ source "$REPO_ROOT/hack/libbuild/common/kubedb_image.sh"
 
 DOCKER_REGISTRY=${DOCKER_REGISTRY:-kubedb}
 IMG=mongo-init
+TAG="latest"
 
 build() {
     pushd "$REPO_ROOT/hack/docker/mongo-init"

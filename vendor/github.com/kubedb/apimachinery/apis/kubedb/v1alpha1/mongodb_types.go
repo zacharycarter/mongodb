@@ -31,6 +31,8 @@ type MongoDBSpec struct {
 	Version types.StrYo `json:"version"`
 	// Number of instances to deploy for a MongoDB database.
 	Replicas *int32 `json:"replicas,omitempty"`
+	// Mode of clustering for mongodb
+	ClusterMode *MongoDBClusterMode `json:"clusterMode,omitempty"`
 	// Storage spec to specify how storage shall be used.
 	Storage core.PersistentVolumeClaimSpec `json:"storage"`
 	// Database authentication secret
@@ -67,6 +69,14 @@ type MongoDBSpec struct {
 	// If specified, these secrets will be passed to individual puller implementations for them to use.
 	// +optional
 	ImagePullSecrets []core.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+}
+
+type MongoDBClusterMode struct {
+	ReplicaSet *MongoDBReplicaSet `json:"replicaSet"`
+}
+
+type MongoDBReplicaSet struct {
+	Name string `json:"name"`
 }
 
 type MongoDBStatus struct {

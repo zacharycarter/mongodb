@@ -5,6 +5,6 @@ RUN apk update && apk add bash openssl && wget -qO /peer-finder http://storage.g
 COPY install.sh /
 COPY on-start.sh /
 
-RUN chmod -c 755 /install.sh /peer-finder
+RUN chmod -c 755 /install.sh /peer-finder /on-start.sh
 
 ENTRYPOINT ["/install.sh"]

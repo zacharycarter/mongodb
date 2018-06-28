@@ -1367,6 +1367,22 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			Dependencies: []string{
 				"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 		},
+		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBClusterMode": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"replicaSet": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBReplicaSet"),
+							},
+						},
+					},
+					Required: []string{"replicaSet"},
+				},
+			},
+			Dependencies: []string{
+				"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBReplicaSet"},
+		},
 		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBList": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
@@ -1409,6 +1425,22 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 			Dependencies: []string{
 				"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDB", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 		},
+		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBReplicaSet": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"name": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+					},
+					Required: []string{"name"},
+				},
+			},
+			Dependencies: []string{},
+		},
 		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBSpec": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
@@ -1425,6 +1457,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Description: "Number of instances to deploy for a MongoDB database.",
 								Type:        []string{"integer"},
 								Format:      "int32",
+							},
+						},
+						"clusterMode": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Mode of clustering for mongodb",
+								Ref:         ref("github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBClusterMode"),
 							},
 						},
 						"storage": {
@@ -1528,7 +1566,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				},
 			},
 			Dependencies: []string{
-				"github.com/appscode/kube-mon/api.AgentSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.BackupScheduleSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.InitSpec", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PersistentVolumeClaimSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecretVolumeSource", "k8s.io/api/core/v1.Toleration"},
+				"github.com/appscode/kube-mon/api.AgentSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.BackupScheduleSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.InitSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBClusterMode", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PersistentVolumeClaimSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecretVolumeSource", "k8s.io/api/core/v1.Toleration"},
 		},
 		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBStatus": {
 			Schema: spec.Schema{
