@@ -17,6 +17,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/reference"
+	)
+
+const (
+	workDirectoryName = "workdir"
+	workDirectoryPath = "/work-dir"
+
+	DataDirectoryName = "datadir"
+	DataDirectoryPath = "/data/db"
+
+	configDirectoryName = "configdir"
+	configDirectoryPath = "/data/configdb"
+
+	initialConfigDirectoryName = "config"
+	initialConfigDirectoryPath = "/configdb-readonly"
+
+	initialKeyDirectoryName = "keydir"
+	initialKeyDirectoryPath = "/keydir-readonly"
 )
 
 func (c *Controller) ensureStatefulSet(mongodb *api.MongoDB) (kutil.VerbType, error) {
@@ -168,6 +185,109 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 	})
 }
 
+func (c *Controller)upsertRSSpec(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) {
+	if mongodb.Spec.ClusterMode != nil &&
+		mongodb.Spec.ClusterMode.ReplicaSet != nil {
+
+	}
+}
+
+func (c *Controller)upsertRSInitContainer(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
+	installContainer := core.Container{
+		Name:            "install",
+		Image:           c.docker.GetInitImage(),
+		ImagePullPolicy: core.PullAlways, //todo: ifNotPresent
+		Args:            []string{"--work-dir=/work-dir"},
+		VolumeMounts: []core.VolumeMount{
+			{
+				Name:      workDirectoryName,
+				MountPath: workDirectoryPath,
+			},
+			{
+				Name:      initialConfigDirectoryName,
+				MountPath: initialConfigDirectoryPath,
+			},
+			{
+				Name:      initialKeyDirectoryName,
+				MountPath: initialKeyDirectoryPath,
+			},
+			{
+				Name:      configDirectoryName,
+				MountPath: configDirectoryPath,
+			},
+		},
+	}
+
+	bootstrapContainer := core.Container{
+		Name:            "bootstrap",
+		Image:           c.docker.GetImageWithTag(mongodb),
+		ImagePullPolicy: core.PullAlways, //todo: ifNotPresent
+		Command:         []string{"/work-dir/peer-finder"},
+		Args:            []string{"-on-start=/work-dir/on-start.sh", "-service=my-release-mongodb-replicaset"},
+		Env: []core.EnvVar{
+			{
+				Name: "POD_NAMESPACE",
+				ValueFrom: &core.EnvVarSource{
+					FieldRef: &core.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "metadata.namespace",
+					},
+				},
+			},
+			{
+				Name:  "REPLICA_SET",
+				Value: mongodb.Spec.ClusterMode.ReplicaSet.Name,
+			},
+			{
+				Name:  "AUTH",
+				Value: "true",
+			},
+			{
+				Name: "MONGO_INITDB_ROOT_USERNAME",
+				ValueFrom: &core.EnvVarSource{
+					SecretKeyRef: &core.SecretKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: mongodb.Spec.DatabaseSecret.SecretName,
+						},
+						Key: KeyMongoDBUser,
+					},
+				},
+			},
+			{
+				Name: "MONGO_INITDB_ROOT_PASSWORD",
+				ValueFrom: &core.EnvVarSource{
+					SecretKeyRef: &core.SecretKeySelector{
+						LocalObjectReference: core.LocalObjectReference{
+							Name: mongodb.Spec.DatabaseSecret.SecretName,
+						},
+						Key: KeyMongoDBPassword,
+					},
+				},
+			},
+		},
+		VolumeMounts: []core.VolumeMount{
+			{
+				Name:      workDirectoryName,
+				MountPath: workDirectoryPath,
+			},
+			{
+				Name:      configDirectoryName,
+				MountPath: configDirectoryPath,
+			},
+			{
+				Name:      DataDirectoryName,
+				MountPath: DataDirectoryPath,
+			},
+		},
+	}
+
+	initContainers := statefulSet.Spec.Template.Spec.InitContainers
+	initContainers = core_util.UpsertContainer(initContainers, installContainer)
+	initContainers = core_util.UpsertContainer(initContainers, bootstrapContainer)
+	statefulSet.Spec.Template.Spec.InitContainers = initContainers
+	return statefulSet
+}
+
 func upsertDataVolume(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
@@ -206,6 +326,46 @@ func upsertDataVolume(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps
 			break
 		}
 	}
+	return statefulSet
+}
+
+func upsertRSDataVolume(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
+	rsVolumes := []core.Volume{
+		{
+			Name: initialConfigDirectoryName,
+			VolumeSource: core.VolumeSource{
+				ConfigMap: &core.ConfigMapVolumeSource{
+					DefaultMode: types.Int32P(420),
+					LocalObjectReference: core.LocalObjectReference{
+						Name: mongodb.Name, //todo : mongodb.conf configMap name from mongodb.spec
+					},
+				},
+			},
+		},
+		{
+			Name: initialKeyDirectoryName,
+			VolumeSource: core.VolumeSource{
+				Secret: &core.SecretVolumeSource{
+					DefaultMode: types.Int32P(256),
+					SecretName: mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret.SecretName,
+				},
+			},
+		},
+		{
+			Name: workDirectoryName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: configDirectoryName,
+			VolumeSource: core.VolumeSource{
+				EmptyDir: &core.EmptyDirVolumeSource{},
+			},
+		},
+	}
+	volumes := statefulSet.Spec.Template.Spec.Volumes
+	statefulSet.Spec.Template.Spec.Volumes = core_util.UpsertVolume(volumes, rsVolumes...)
 	return statefulSet
 }
 

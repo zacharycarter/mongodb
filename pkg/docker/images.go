@@ -9,6 +9,7 @@ const (
 	ImageMongoDBOperator = "mg-operator"
 	ImageMongoDB         = "mongo"
 	ImageMongoDBTools    = "mongo-tools"
+	ImageMongoDBInit     = "mongo-init"
 )
 
 type Docker struct {
@@ -40,4 +41,8 @@ func (d Docker) GetToolsImage(mongodb *api.MongoDB) string {
 
 func (d Docker) GetToolsImageWithTag(mongodb *api.MongoDB) string {
 	return d.GetToolsImage(mongodb) + ":" + string(mongodb.Spec.Version)
+}
+
+func (d Docker) GetInitImage() string {
+	return d.Registry + "/" + ImageMongoDBInit
 }
