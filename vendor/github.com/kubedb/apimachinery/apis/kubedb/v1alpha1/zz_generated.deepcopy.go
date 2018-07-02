@@ -984,6 +984,15 @@ func (in *MongoDBSpec) DeepCopyInto(out *MongoDBSpec) {
 			(*in).DeepCopyInto(*out)
 		}
 	}
+	if in.ConfigFile != nil {
+		in, out := &in.ConfigFile, &out.ConfigFile
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(v1.ConfigMapVolumeSource)
+			(*in).DeepCopyInto(*out)
+		}
+	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = make(map[string]string, len(*in))

@@ -93,6 +93,10 @@ func (c *Controller) create(mongodb *api.MongoDB) error {
 		return err
 	}
 
+	if err := c.ensureConfigMap(mongodb); err != nil {
+		return err
+	}
+
 	// ensure database StatefulSet
 	vt2, err := c.ensureStatefulSet(mongodb)
 	if err != nil {

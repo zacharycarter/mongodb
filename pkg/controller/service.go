@@ -16,6 +16,10 @@ import (
 	"k8s.io/client-go/tools/reference"
 )
 
+const (
+	MongoDbPort = "27017"
+)
+
 func (c *Controller) ensureService(mongodb *api.MongoDB) (kutil.VerbType, error) {
 	// Check if service name exists
 	if err := c.checkService(mongodb); err != nil {

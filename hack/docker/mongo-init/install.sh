@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# todo: reove later
+set -x
+
 WORKDIR_VOLUME="/work-dir"
 
 for i in "$@"; do

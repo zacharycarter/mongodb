@@ -1483,6 +1483,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 								Ref:         ref("k8s.io/api/core/v1.SecretVolumeSource"),
 							},
 						},
+						"configFile": {
+							SchemaProps: spec.SchemaProps{
+								Description: "ConfigFile (i.e. mongod.conf) for mongodb",
+								Ref:         ref("k8s.io/api/core/v1.ConfigMapVolumeSource"),
+							},
+						},
 						"nodeSelector": {
 							SchemaProps: spec.SchemaProps{
 								Description: "NodeSelector is a selector which must be true for the pod to fit on a node",
@@ -1572,7 +1578,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 				},
 			},
 			Dependencies: []string{
-				"github.com/appscode/kube-mon/api.AgentSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.BackupScheduleSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.InitSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBClusterMode", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PersistentVolumeClaimSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecretVolumeSource", "k8s.io/api/core/v1.Toleration"},
+				"github.com/appscode/kube-mon/api.AgentSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.BackupScheduleSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.InitSpec", "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBClusterMode", "k8s.io/api/core/v1.Affinity", "k8s.io/api/core/v1.ConfigMapVolumeSource", "k8s.io/api/core/v1.LocalObjectReference", "k8s.io/api/core/v1.PersistentVolumeClaimSpec", "k8s.io/api/core/v1.ResourceRequirements", "k8s.io/api/core/v1.SecretVolumeSource", "k8s.io/api/core/v1.Toleration"},
 		},
 		"github.com/kubedb/apimachinery/apis/kubedb/v1alpha1.MongoDBStatus": {
 			Schema: spec.Schema{

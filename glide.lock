@@ -1,5 +1,5 @@
-hash: 3cece78b1504445ea1167572058eabb01d2c7ad53a3f53580716bd7b283630d4
-updated: 2018-06-28T15:35:26.73762249+06:00
+hash: 4776d3258888542dee310c567039f48555983e1242c3c2d529c6a068f85ac680
+updated: 2018-07-02T16:37:13.897452745+06:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -39,7 +39,7 @@ imports:
   - admission/v1beta1
   - registry/admissionreview/v1beta1
 - name: github.com/appscode/kutil
-  version: 3a6daf80a33ac4087fb4c7de7bc1c5dbfb5ac557
+  version: b29ff1e52f6c47b482d801fdea3eb219a3f1172e
   subpackages:
   - apiextensions/v1beta1
   - apps/v1
@@ -312,7 +312,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 13f86432b882000a51c6e610c620974462691a97
 - name: github.com/kubedb/apimachinery
-  version: c2ff9a9e3abeb66bde17f96de2648eaf502d55bb
+  version: 4714e38ed54f507895ab5aedc00659b6826f5382
   subpackages:
   - apis/kubedb
   - apis/kubedb/v1alpha1
@@ -441,6 +441,8 @@ imports:
   - doc
 - name: github.com/spf13/pflag
   version: 583c0c0531f06d5278b7d917446061adc344b5cd
+- name: github.com/the-redback/go-oneliners
+  version: 82a97ec58df4809a2bc57ebbbcc1e6a2feb78111
 - name: github.com/ugorji/go
   version: ded73eae5db7e7a0ef6f55aace87a2873c5d2b74
   subpackages:
@@ -511,8 +513,13 @@ imports:
   version: f51c12702a4d776e4c1fa9b0fabab841babae631
   subpackages:
   - rate
-- name: google.golang.org/api/storage/v1
-  version: 082d671a2a341aa205b22b580fa69747dcc3cdc8
+- name: google.golang.org/api
+  version: e0f3bfad25321f7b0777b3ab35a0503dcb221744
+  subpackages:
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - storage/v1
 - name: google.golang.org/appengine
   version: b1f26356af11148e710935ed1ac8a7f5702c7612
   subpackages:
@@ -523,8 +530,8 @@ imports:
   - internal/log
   - internal/modules
   - internal/remote_api
-- name: google.golang.org/appengine/urlfetch
-  version: b1f26356af11148e710935ed1ac8a7f5702c7612
+  - internal/urlfetch
+  - urlfetch
 - name: google.golang.org/genproto
   version: 09f6ed296fc66555a25fe4ce95173148778dfa85
   subpackages:
@@ -930,7 +937,7 @@ imports:
   - pkg/client/clientset_generated/clientset/typed/apiregistration/v1
   - pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 - name: k8s.io/kube-openapi
-  version: 4cac20de16b951c103aa40c4bafbc8cefdd18a12
+  version: d83b052f768a50a309c692a9c271da3f3276ff88
   subpackages:
   - pkg/builder
   - pkg/common
