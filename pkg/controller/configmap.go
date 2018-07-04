@@ -1,20 +1,22 @@
 package controller
 
 import (
+	core_util "github.com/appscode/kutil/core/v1"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
-	core "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/reference"
-	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	"github.com/kubedb/apimachinery/pkg/eventer"
 	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
-	)
+	"github.com/kubedb/apimachinery/pkg/eventer"
+	core "k8s.io/api/core/v1"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/reference"
+)
 
 const (
 	ConfigFIleSecretSuffix = "-conf"
-	ConfigFIleName = "mongod.conf"
+	ConfigFIleName         = "mongod.conf"
 )
+
 var (
 	mongodbConf = "null"
 )
@@ -35,7 +37,9 @@ func (c *Controller) ensureConfigMap(mongodb *api.MongoDB) error {
 			return err
 		}
 		ms, _, err := util.PatchMongoDB(c.ExtClient, mongodb, func(in *api.MongoDB) *api.MongoDB {
-			in.Spec.ConfigFile = configVolumeSource
+			in.Spec.ConfigFile = &core.VolumeSource{
+				ConfigMap: configVolumeSource,
+			}
 			return in
 		})
 		if err != nil {
@@ -54,20 +58,26 @@ func (c *Controller) ensureConfigMap(mongodb *api.MongoDB) error {
 	return nil
 }
 
-
 func (c *Controller) createConfigFile(mongodb *api.MongoDB) (*core.ConfigMapVolumeSource, error) {
 	configMapName := mongodb.Name + ConfigFIleSecretSuffix
+
+	ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb)
+	if rerr != nil {
+		return nil, rerr
+	}
 
 	configMap := &core.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
 			Namespace: mongodb.Namespace,
-			Labels: mongodb.OffshootLabels(),
+			Labels:    mongodb.OffshootLabels(),
 		},
 		Data: map[string]string{
 			ConfigFIleName: mongodbConf,
 		},
 	}
+
+	configMap.ObjectMeta = core_util.EnsureOwnerReference(configMap.ObjectMeta, ref)
 
 	cfg, err := c.Client.CoreV1().ConfigMaps(mongodb.Namespace).Create(configMap)
 	if err != nil && !kerr.IsAlreadyExists(err) {

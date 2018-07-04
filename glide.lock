@@ -1,5 +1,5 @@
 hash: 4776d3258888542dee310c567039f48555983e1242c3c2d529c6a068f85ac680
-updated: 2018-07-02T16:37:13.897452745+06:00
+updated: 2018-07-03T12:30:39.943221635+06:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -39,7 +39,7 @@ imports:
   - admission/v1beta1
   - registry/admissionreview/v1beta1
 - name: github.com/appscode/kutil
-  version: b29ff1e52f6c47b482d801fdea3eb219a3f1172e
+  version: eb3246dac8ccfa08900d5e719af3ee2b44de7bab
   subpackages:
   - apiextensions/v1beta1
   - apps/v1
@@ -312,7 +312,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 13f86432b882000a51c6e610c620974462691a97
 - name: github.com/kubedb/apimachinery
-  version: 4714e38ed54f507895ab5aedc00659b6826f5382
+  version: d214e711eabe163a1b4cba2f9bfc4d98c1f5721e
   subpackages:
   - apis/kubedb
   - apis/kubedb/v1alpha1

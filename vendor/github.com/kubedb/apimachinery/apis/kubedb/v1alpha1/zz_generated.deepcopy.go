@@ -989,7 +989,7 @@ func (in *MongoDBSpec) DeepCopyInto(out *MongoDBSpec) {
 		if *in == nil {
 			*out = nil
 		} else {
-			*out = new(v1.ConfigMapVolumeSource)
+			*out = new(v1.VolumeSource)
 			(*in).DeepCopyInto(*out)
 		}
 	}

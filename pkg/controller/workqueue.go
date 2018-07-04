@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"fmt"
+
 	"github.com/appscode/go/log"
 	core_util "github.com/appscode/kutil/core/v1"
 	meta_util "github.com/appscode/kutil/meta"
@@ -49,6 +51,7 @@ func (c *Controller) runMongoDB(key string) error {
 		// is dependent on the actual instance, to detect that a MongoDB was recreated with the same name
 		mongodb := obj.(*api.MongoDB).DeepCopy()
 		if mongodb.DeletionTimestamp != nil {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>> Deletion Timestamp != nil!!!!!!!!")
 			if core_util.HasFinalizer(mongodb.ObjectMeta, api.GenericKey) {
 				util.AssignTypeKind(mongodb)
 				if err := c.pause(mongodb); err != nil {
@@ -62,6 +65,7 @@ func (c *Controller) runMongoDB(key string) error {
 				return err
 			}
 		} else {
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>> Deletion Timestamp == nil!!!!!!!!")
 			mongodb, _, err = util.PatchMongoDB(c.ExtClient, mongodb, func(in *api.MongoDB) *api.MongoDB {
 				in.ObjectMeta = core_util.AddFinalizer(in.ObjectMeta, api.GenericKey)
 				return in

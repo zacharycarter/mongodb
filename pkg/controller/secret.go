@@ -19,10 +19,10 @@ const (
 
 	KeyMongoDBUser     = "user"
 	KeyMongoDBPassword = "password"
-	KeyForKeyFile = "key.txt"
+	KeyForKeyFile      = "key.txt"
 
 	DatabaseSecretSuffix = "-auth"
-	KeyFileSecretSuffix = "-keyfile"
+	KeyFileSecretSuffix  = "-keyfile"
 
 	ExporterSecretPath = "/var/run/secrets/kubedb.com/"
 )
@@ -152,7 +152,7 @@ func (c *Controller) createKeyFileSecret(mongodb *api.MongoDB) (*core.SecretVolu
 			},
 			Type: core.SecretTypeOpaque,
 			StringData: map[string]string{
-				KeyForKeyFile : randToken,
+				KeyForKeyFile: randToken,
 			},
 		}
 		if _, err := c.Client.CoreV1().Secrets(mongodb.Namespace).Create(secret); err != nil {

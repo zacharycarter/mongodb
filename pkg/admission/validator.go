@@ -134,8 +134,8 @@ func ValidateMongoDB(client kubernetes.Interface, extClient kubedbv1alpha1.Kubed
 		return fmt.Errorf(`KubeDB doesn't support MongoDB version: %s`, string(mongodb.Spec.Version))
 	}
 
-	if mongodb.Spec.Replicas == nil || *mongodb.Spec.Replicas != 1 {
-		return fmt.Errorf(`spec.replicas "%v" invalid. Value must be one`, mongodb.Spec.Replicas)
+	if mongodb.Spec.Replicas == nil || *mongodb.Spec.Replicas < 1 {
+		return fmt.Errorf(`spec.replicas "%v" invalid. Must be greater than zero`, mongodb.Spec.Replicas)
 	}
 
 	if err := amv.ValidateStorage(client, mongodb.Spec.Storage); err != nil {

@@ -38,7 +38,7 @@ type MongoDBSpec struct {
 	// Database authentication secret
 	DatabaseSecret *core.SecretVolumeSource `json:"databaseSecret,omitempty"`
 	// ConfigFile (i.e. mongod.conf) for mongodb
-	ConfigFile *core.ConfigMapVolumeSource `json:"configFile,omitempty"`
+	ConfigFile *core.VolumeSource `json:"configFile,omitempty"`
 	// NodeSelector is a selector which must be true for the pod to fit on a node
 	// +optional
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
