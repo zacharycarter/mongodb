@@ -18,6 +18,7 @@ import (
 
 const (
 	MongoDbPort = "27017"
+	mongoDBGoverningServiceSuffix = "-gvr-svc"
 )
 
 func (c *Controller) ensureService(mongodb *api.MongoDB) (kutil.VerbType, error) {
@@ -109,4 +110,37 @@ func upsertServicePort(service *core.Service, mongodb *api.MongoDB) []core.Servi
 		})
 	}
 	return core_util.MergeServicePorts(service.Spec.Ports, desiredPorts)
+}
+
+func (c *Controller) createMongoDBGoverningService(mongodb *api.MongoDB) (string, error) {
+
+	ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb)
+	if rerr != nil {
+		return "", rerr
+	}
+
+	service := &core.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: mongodb.ServiceName()+mongoDBGoverningServiceSuffix,
+			Labels: mongodb.OffshootLabels(),
+		},
+		Spec: core.ServiceSpec{
+			Type:      core.ServiceTypeClusterIP,
+			ClusterIP: core.ClusterIPNone,
+			Ports: []core.ServicePort{
+				{
+					Name: "db",
+					Port:       27017,
+				},
+			},
+			Selector: mongodb.Labels,
+		},
+	}
+	service.ObjectMeta = core_util.EnsureOwnerReference(service.ObjectMeta, ref)
+
+	svc, err := c.Client.CoreV1().Services(mongodb.Namespace).Create(service)
+	if err != nil && !kerr.IsAlreadyExists(err) {
+		return "",err
+	}
+	return svc.Name,nil
 }
