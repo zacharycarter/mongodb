@@ -6,6 +6,7 @@ crds=(mongodbs snapshots dormantdatabases)
 export KUBEDB_UNINSTALL=0
 export KUBEDB_PURGE=0
 export KUBEDB_NAMESPACE=kube-system
+NS=${NS:-default}
 
 show_help() {
     echo "toolbox.sh - deb tool for kubedb operator"
@@ -62,6 +63,10 @@ if [ "$KUBEDB_UNINSTALL" -eq 1 ]; then
 
     # https://github.com/kubernetes/kubernetes/issues/60538
     if [ "$KUBEDB_PURGE" -eq 1 ]; then
+
+        # delete db stuffs
+        kubectl delete configmap,sts,service,secret,pvc -l kubedb.com/kind=MongoDB -n ${NS} || true
+
         for crd in "${crds[@]}"; do
             pairs=($(kubectl get ${crd}.kubedb.com --all-namespaces -o jsonpath='{range .items[*]}{.metadata.name} {.metadata.namespace} {end}' || true))
             total=${#pairs[*]}

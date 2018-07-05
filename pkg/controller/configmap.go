@@ -1,7 +1,7 @@
 package controller
 
 import (
-	core_util "github.com/appscode/kutil/core/v1"
+	"github.com/appscode/go/types"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
 	"github.com/kubedb/apimachinery/pkg/eventer"
@@ -61,11 +61,6 @@ func (c *Controller) ensureConfigMap(mongodb *api.MongoDB) error {
 func (c *Controller) createConfigFile(mongodb *api.MongoDB) (*core.ConfigMapVolumeSource, error) {
 	configMapName := mongodb.Name + ConfigFIleSecretSuffix
 
-	ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb)
-	if rerr != nil {
-		return nil, rerr
-	}
-
 	configMap := &core.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
@@ -77,8 +72,6 @@ func (c *Controller) createConfigFile(mongodb *api.MongoDB) (*core.ConfigMapVolu
 		},
 	}
 
-	configMap.ObjectMeta = core_util.EnsureOwnerReference(configMap.ObjectMeta, ref)
-
 	cfg, err := c.Client.CoreV1().ConfigMaps(mongodb.Namespace).Create(configMap)
 	if err != nil && !kerr.IsAlreadyExists(err) {
 		return nil, err
@@ -88,5 +81,6 @@ func (c *Controller) createConfigFile(mongodb *api.MongoDB) (*core.ConfigMapVolu
 		LocalObjectReference: core.LocalObjectReference{
 			Name: cfg.Name,
 		},
+		DefaultMode: types.Int32P(420),
 	}, nil
 }

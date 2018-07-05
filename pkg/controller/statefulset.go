@@ -108,7 +108,7 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 		in.Labels = core_util.UpsertMap(in.Labels, mongodb.StatefulSetLabels())
 		in.Annotations = core_util.UpsertMap(in.Annotations, mongodb.StatefulSetAnnotations())
 
-		in.Spec.Replicas = types.Int32P(1)
+		in.Spec.Replicas = mongodb.Spec.Replicas
 		in.Spec.ServiceName = c.GoverningService
 		in.Spec.Template.Labels = in.Labels
 		in.Spec.Selector = &metav1.LabelSelector{
@@ -182,9 +182,15 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 
 		if mongodb.Spec.ClusterMode != nil &&
 			mongodb.Spec.ClusterMode.ReplicaSet != nil {
+			in = c.upsertInstallInitcheck(in, mongodb)
 			in = c.upsertRSInitContainer(in, mongodb)
 			in = upsertRSDataVolume(in, mongodb)
 			in = upsertRSArgs(in, mongodb)
+			in.Spec.Template.Spec.SecurityContext = &core.PodSecurityContext{
+				FSGroup:      types.Int64P(999),
+				RunAsNonRoot: types.BoolP(true),
+				RunAsUser:    types.Int64P(999),
+			}
 			oneliners.PrettyJson(in, "after rs args")
 		}
 
@@ -205,6 +211,7 @@ func upsertRSArgs(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Sta
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
 			args := []string{
+				"--dbpath=/data/db",
 				"--replSet=" + mongodb.Spec.ClusterMode.ReplicaSet.Name,
 				"--bind_ip=0.0.0.0",
 				"--keyFile=" + configDirectoryPath + "/" + KeyForKeyFile,
@@ -288,13 +295,60 @@ func (c *Controller) upsertInstallInitContainer(statefulSet *apps.StatefulSet, m
 	return statefulSet
 }
 
+// Init container for both ReplicaSet and Standalone instances
+func (c *Controller) upsertInstallInitcheck(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
+	installContainer := core.Container{
+		Name:    "check",
+		Image:   "busybox",
+		Command: []string{"sh"},
+		Args: []string{
+			"-c",
+			`
+			set -e
+           	set -x
+ 
+           	ls -la /work-dir
+           	ls -la /configdb-readonly
+           	ls -la /keydir-readonly
+           	ls -la /data/configdb
+			cat /work-dir/on-start.sh
+			`,
+		},
+		VolumeMounts: []core.VolumeMount{
+			{
+				Name:      workDirectoryName,
+				MountPath: workDirectoryPath,
+			},
+			{
+				Name:      initialConfigDirectoryName,
+				MountPath: initialConfigDirectoryPath,
+			},
+			{
+				Name:      configDirectoryName,
+				MountPath: configDirectoryPath,
+			},
+		},
+	}
+	if mongodb.Spec.ClusterMode != nil &&
+		mongodb.Spec.ClusterMode.ReplicaSet != nil {
+		installContainer.VolumeMounts = append(installContainer.VolumeMounts, core.VolumeMount{
+			Name:      initialKeyDirectoryName,
+			MountPath: initialKeyDirectoryPath,
+		})
+	}
+
+	initContainers := statefulSet.Spec.Template.Spec.InitContainers
+	statefulSet.Spec.Template.Spec.InitContainers = core_util.UpsertContainer(initContainers, installContainer)
+	return statefulSet
+}
+
 func (c *Controller) upsertRSInitContainer(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
 	bootstrapContainer := core.Container{
 		Name:            "bootstrap",
 		Image:           c.docker.GetImageWithTag(mongodb),
 		ImagePullPolicy: core.PullAlways, //todo: ifNotPresent
 		Command:         []string{"/work-dir/peer-finder"},
-		Args:            []string{"-on-start=/work-dir/on-start.sh", "-service=" + mongodb.ServiceName()},
+		Args:            []string{"-on-start=/work-dir/on-start.sh", "-service=" + c.GoverningService},
 		Env: []core.EnvVar{
 			{
 				Name: "POD_NAMESPACE",
@@ -334,13 +388,6 @@ func (c *Controller) upsertRSInitContainer(statefulSet *apps.StatefulSet, mongod
 						Key: KeyMongoDBPassword,
 					},
 				},
-			},
-		},
-		Ports: []core.ContainerPort{
-			{
-				Name:          "db",
-				ContainerPort: 27017,
-				Protocol:      core.ProtocolTCP,
 			},
 		},
 		VolumeMounts: []core.VolumeMount{

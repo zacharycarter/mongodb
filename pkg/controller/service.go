@@ -17,11 +17,12 @@ import (
 )
 
 const (
-	MongoDbPort = "27017"
+	MongoDbPort                   = "27017"
 	mongoDBGoverningServiceSuffix = "-gvr-svc"
 )
 
 func (c *Controller) ensureService(mongodb *api.MongoDB) (kutil.VerbType, error) {
+	return kutil.VerbUnchanged, nil // todo: delete
 	// Check if service name exists
 	if err := c.checkService(mongodb); err != nil {
 		return kutil.VerbUnchanged, err
@@ -121,8 +122,12 @@ func (c *Controller) createMongoDBGoverningService(mongodb *api.MongoDB) (string
 
 	service := &core.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: mongodb.ServiceName()+mongoDBGoverningServiceSuffix,
-			Labels: mongodb.OffshootLabels(),
+			Name:      mongodb.ServiceName() + mongoDBGoverningServiceSuffix,
+			Namespace: mongodb.Namespace,
+			Labels:    mongodb.OffshootLabels(),
+			Annotations: map[string]string{
+				"service.alpha.kubernetes.io/tolerate-unready-endpoints": "true",
+			},
 		},
 		Spec: core.ServiceSpec{
 			Type:      core.ServiceTypeClusterIP,
@@ -130,17 +135,17 @@ func (c *Controller) createMongoDBGoverningService(mongodb *api.MongoDB) (string
 			Ports: []core.ServicePort{
 				{
 					Name: "db",
-					Port:       27017,
+					Port: 27017,
 				},
 			},
-			Selector: mongodb.Labels,
+			Selector: mongodb.OffshootLabels(),
 		},
 	}
 	service.ObjectMeta = core_util.EnsureOwnerReference(service.ObjectMeta, ref)
 
-	svc, err := c.Client.CoreV1().Services(mongodb.Namespace).Create(service)
+	_, err := c.Client.CoreV1().Services(mongodb.Namespace).Create(service)
 	if err != nil && !kerr.IsAlreadyExists(err) {
-		return "",err
+		return "", err
 	}
-	return svc.Name,nil
+	return service.Name, nil
 }
