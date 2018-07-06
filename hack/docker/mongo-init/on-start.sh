@@ -2,9 +2,6 @@
 
 # ref: https://github.com/kubernetes/charts/blob/master/stable/mongodb-replicaset/init/on-start.sh
 
-echo ">>>>>>>>>>>>>>>>>>>>>> in script"
-set -x
-
 replica_set="$REPLICA_SET"
 script_name=${0##*/}
 

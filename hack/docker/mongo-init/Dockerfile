@@ -1,10 +1,10 @@
 FROM alpine:3.7
 
-RUN apk update && apk add bash openssl
-#&& wget -qO /peer-finder http://storage.googleapis.com/kubernetes-release/pets/peer-finder
+# ref: peer-finder: https://github.com/kubernetes/contrib/tree/master/peer-finder
+# wget peer-finder: https://github.com/kubernetes/charts/blob/master/stable/mongodb-replicaset/install/Dockerfile#L18
+RUN apk update && apk add bash openssl && wget -qO /peer-finder http://storage.googleapis.com/kubernetes-release/pets/peer-finder
 
 COPY install.sh /
-COPY peer-finder /
 COPY on-start.sh /
 
 RUN chmod -c 755 /install.sh /peer-finder /on-start.sh

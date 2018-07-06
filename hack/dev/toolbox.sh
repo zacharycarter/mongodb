@@ -45,14 +45,13 @@ while test $# -gt 0; do
 done
 
 if [ "$KUBEDB_UNINSTALL" -eq 1 ]; then
-# delete webhooks and apiservices
+    # delete webhooks and apiservices
     kubectl delete validatingwebhookconfiguration -l app=kubedb || true
     kubectl delete mutatingwebhookconfiguration -l app=kubedb || true
     kubectl delete apiservice -l app=kubedb
     # delete kubedb operator
     kubectl delete deployment -l app=kubedb --namespace $KUBEDB_NAMESPACE
     kubectl delete service -l app=kubedb --namespace $KUBEDB_NAMESPACE
-    kubectl delete endpoints -l app=kubedb --namespace $KUBEDB_NAMESPACE
     kubectl delete secret -l app=kubedb --namespace $KUBEDB_NAMESPACE
     # delete RBAC objects, if --rbac flag was used.
     kubectl delete serviceaccount -l app=kubedb --namespace $KUBEDB_NAMESPACE
@@ -60,6 +59,16 @@ if [ "$KUBEDB_UNINSTALL" -eq 1 ]; then
     kubectl delete clusterrole -l app=kubedb
     kubectl delete rolebindings -l app=kubedb --namespace $KUBEDB_NAMESPACE
     kubectl delete role -l app=kubedb --namespace $KUBEDB_NAMESPACE
+
+    echo "waiting for kubedb operator pod to stop running"
+    for (( ; ; )); do
+       pods=($(kubectl get pods --all-namespaces -l app=kubedb -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+       total=${#pods[*]}
+        if [ $total -eq 0 ] ; then
+            break
+        fi
+       sleep 2
+    done
 
     # https://github.com/kubernetes/kubernetes/issues/60538
     if [ "$KUBEDB_PURGE" -eq 1 ]; then
@@ -84,9 +93,12 @@ if [ "$KUBEDB_UNINSTALL" -eq 1 ]; then
             # delete crd
             kubectl delete crd ${crd}.kubedb.com || true
         done
+
+        # delete user roles
+        kubectl delete clusterroles kubedb:core:admin kubedb:core:edit kubedb:core:view || true
     fi
 
     echo
-    echo "Successfully Cleaned KubeDB Stuffs!"
+    echo "Successfully uninstalled KubeDB!"
     exit 0
 fi

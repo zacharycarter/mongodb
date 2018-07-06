@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/base64"
 	"fmt"
 
 	"github.com/appscode/go/crypto/rand"
@@ -144,6 +145,7 @@ func (c *Controller) createKeyFileSecret(mongodb *api.MongoDB) (*core.SecretVolu
 	}
 	if sc == nil {
 		randToken := rand.GenerateTokenWithLength(756)
+		base64Token := base64.StdEncoding.EncodeToString([]byte(randToken))
 
 		secret := &core.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -152,7 +154,7 @@ func (c *Controller) createKeyFileSecret(mongodb *api.MongoDB) (*core.SecretVolu
 			},
 			Type: core.SecretTypeOpaque,
 			StringData: map[string]string{
-				KeyForKeyFile: randToken,
+				KeyForKeyFile: base64Token,
 			},
 		}
 		if _, err := c.Client.CoreV1().Secrets(mongodb.Namespace).Create(secret); err != nil {
