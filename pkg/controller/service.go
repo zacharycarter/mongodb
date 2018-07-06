@@ -22,7 +22,6 @@ const (
 )
 
 func (c *Controller) ensureService(mongodb *api.MongoDB) (kutil.VerbType, error) {
-	return kutil.VerbUnchanged, nil // todo: delete
 	// Check if service name exists
 	if err := c.checkService(mongodb); err != nil {
 		return kutil.VerbUnchanged, err

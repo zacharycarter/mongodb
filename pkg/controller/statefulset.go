@@ -128,7 +128,7 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			Args: []string{
 				"--auth",
 				"--config=" + configDirectoryPath + "/mongod.conf",
-				"--port=" + string(MongoDbPort),
+				//"--port=" + string(MongoDbPort),
 			},
 			Resources: mongodb.Spec.Resources,
 		})
@@ -211,12 +211,14 @@ func upsertRSArgs(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Sta
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
 			args := []string{
-				"--dbpath=/data/db",
+				//"--dbpath=/data/db",
 				"--replSet=" + mongodb.Spec.ClusterMode.ReplicaSet.Name,
 				"--bind_ip=0.0.0.0",
 				"--keyFile=" + configDirectoryPath + "/" + KeyForKeyFile,
 			}
-			statefulSet.Spec.Template.Spec.Containers[i].Command = []string{"mongod"}
+			statefulSet.Spec.Template.Spec.Containers[i].Command = []string{
+				"mongod",
+			}
 			statefulSet.Spec.Template.Spec.Containers[i].Args = append(statefulSet.Spec.Template.Spec.Containers[i].Args, args...)
 		}
 	}
