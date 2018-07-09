@@ -126,9 +126,13 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 				},
 			},
 			Args: []string{
+				"--dbpath",
+				"/data/db",
 				"--auth",
-				//"--config=" + configDirectoryPath + "/mongod.conf",
-				//"--port=" + string(MongoDbPort),
+				"--config",
+				configDirectoryPath + "/mongod.conf",
+				"--port",
+				string(MongoDbPort),
 			},
 			Resources: mongodb.Spec.Resources,
 		})
@@ -212,7 +216,7 @@ func upsertRSArgs(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Sta
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
 			args := []string{
-				//"--dbpath=/data/db",
+				//"",
 				"--replSet=" + mongodb.Spec.ClusterMode.ReplicaSet.Name,
 				"--bind_ip=0.0.0.0",
 				"--keyFile=" + configDirectoryPath + "/" + KeyForKeyFile,
