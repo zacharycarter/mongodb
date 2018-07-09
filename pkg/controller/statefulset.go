@@ -170,6 +170,7 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 		}
 		// Set Admin Secret as MYSQL_ROOT_PASSWORD env variable
 		in = upsertEnv(in, mongodb)
+		in = upsertUserEnv(in, mongodb)
 		in = upsertDataVolume(in, mongodb)
 		in = upsertInitDataVolume(in, mongodb)
 		in = addContainerProbe(in, mongodb)
@@ -533,6 +534,17 @@ func upsertEnv(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Statef
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
 			statefulSet.Spec.Template.Spec.Containers[i].Env = core_util.UpsertEnvVars(container.Env, envList...)
+			return statefulSet
+		}
+	}
+	return statefulSet
+}
+
+// upsertUserEnv add/overwrite env from user provided env in crd spec
+func upsertUserEnv(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
+	for i, container := range statefulSet.Spec.Template.Spec.Containers {
+		if container.Name == api.ResourceSingularMongoDB {
+			statefulSet.Spec.Template.Spec.Containers[i].Env = core_util.UpsertEnvVars(container.Env, mongodb.Spec.Env...)
 			return statefulSet
 		}
 	}
