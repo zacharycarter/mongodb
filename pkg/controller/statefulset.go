@@ -127,7 +127,7 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			},
 			Args: []string{
 				"--auth",
-				"--config=" + configDirectoryPath + "/mongod.conf",
+				//"--config=" + configDirectoryPath + "/mongod.conf",
 				//"--port=" + string(MongoDbPort),
 			},
 			Resources: mongodb.Spec.Resources,
