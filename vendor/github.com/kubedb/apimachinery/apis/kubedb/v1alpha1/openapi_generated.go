@@ -1915,12 +1915,6 @@ func schema_apimachinery_apis_kubedb_v1alpha1_MongoDBSpec(ref common.ReferenceCa
 							Ref:         ref("k8s.io/api/core/v1.SecretVolumeSource"),
 						},
 					},
-					"configFile": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ConfigFile (i.e. mongod.conf) for mongodb",
-							Ref:         ref("k8s.io/api/core/v1.VolumeSource"),
-						},
-					},
 					"nodeSelector": {
 						SchemaProps: spec.SchemaProps{
 							Description: "NodeSelector is a selector which must be true for the pod to fit on a node",
@@ -2003,6 +1997,12 @@ func schema_apimachinery_apis_kubedb_v1alpha1_MongoDBSpec(ref common.ReferenceCa
 									},
 								},
 							},
+						},
+					},
+					"configSource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ConfigSource is an optional field to provide custom configuration file for database (i.e mongod.cnf). If specified, this file will be used as configuration file otherwise default configuration file will be used.",
+							Ref:         ref("k8s.io/api/core/v1.VolumeSource"),
 						},
 					},
 					"env": {

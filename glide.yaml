@@ -51,7 +51,7 @@ import:
 - package: k8s.io/kube-aggregator
   version: kubernetes-1.11.0
 - package: github.com/appscode/kutil
-  version: release-8.0
+  version: multiVol
 - package: github.com/appscode/kube-mon
   version: release-8.0
 - package: github.com/appscode/kubernetes-webhook-util

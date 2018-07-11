@@ -1005,15 +1005,6 @@ func (in *MongoDBSpec) DeepCopyInto(out *MongoDBSpec) {
 			(*in).DeepCopyInto(*out)
 		}
 	}
-	if in.ConfigFile != nil {
-		in, out := &in.ConfigFile, &out.ConfigFile
-		if *in == nil {
-			*out = nil
-		} else {
-			*out = new(v1.VolumeSource)
-			(*in).DeepCopyInto(*out)
-		}
-	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
 		*out = make(map[string]string, len(*in))
@@ -1069,6 +1060,15 @@ func (in *MongoDBSpec) DeepCopyInto(out *MongoDBSpec) {
 		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
 		*out = make([]v1.LocalObjectReference, len(*in))
 		copy(*out, *in)
+	}
+	if in.ConfigSource != nil {
+		in, out := &in.ConfigSource, &out.ConfigSource
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(v1.VolumeSource)
+			(*in).DeepCopyInto(*out)
+		}
 	}
 	if in.Env != nil {
 		in, out := &in.Env, &out.Env

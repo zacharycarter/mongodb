@@ -110,6 +110,14 @@ func (a *MongoDBValidator) Admit(req *admission.AdmissionRequest) *admission.Adm
 				oldMongoDB.Spec.DatabaseSecret = mongodb.Spec.DatabaseSecret
 			}
 
+			// Allow changing Database ReplicaSet Keyfile only if there was no secret have set up yet.
+			if mongodb.Spec.ClusterMode != nil {
+				if mongodb.Spec.ClusterMode.ReplicaSet != nil &&
+					oldMongoDB.Spec.ClusterMode.ReplicaSet.KeyFileSecret == nil {
+					oldMongoDB.Spec.ClusterMode.ReplicaSet.KeyFileSecret = mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret
+				}
+			}
+
 			if err := validateUpdate(mongodb, oldMongoDB, req.Kind.Kind); err != nil {
 				return hookapi.StatusBadRequest(fmt.Errorf("%v", err))
 			}
@@ -247,9 +255,11 @@ var preconditionSpecFields = []string{
 	"spec.version",
 	"spec.storage",
 	"spec.databaseSecret",
+	"spec.clusterMode",
 	"spec.nodeSelector",
 	"spec.init",
 	"spec.env",
+	"spec.configSource",
 }
 
 func preconditionFailedError(kind string) error {

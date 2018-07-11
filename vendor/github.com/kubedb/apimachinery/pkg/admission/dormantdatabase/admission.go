@@ -319,8 +319,7 @@ func getDatabaseSecretName(dormantDatabase *api.DormantDatabase, dbKind string) 
 			dormantDatabase.Spec.Origin.Spec.MongoDB.DatabaseSecret,
 		}
 		if dormantDatabase.Spec.Origin.Spec.MongoDB.ClusterMode != nil &&
-			dormantDatabase.Spec.Origin.Spec.MongoDB.ClusterMode.ReplicaSet != nil &&
-			dormantDatabase.Spec.Origin.Spec.MongoDB.ClusterMode.ReplicaSet.KeyFileSecret != nil {
+			dormantDatabase.Spec.Origin.Spec.MongoDB.ClusterMode.ReplicaSet != nil {
 			secretVol = append(secretVol, dormantDatabase.Spec.Origin.Spec.MongoDB.ClusterMode.ReplicaSet.KeyFileSecret)
 		}
 		return secretVol

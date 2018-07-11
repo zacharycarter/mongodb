@@ -141,6 +141,13 @@ func setDefaultsFromDormantDB(extClient cs.Interface, mongodb *api.MongoDB) erro
 		mongodb.Spec.DatabaseSecret = ddbOriginSpec.DatabaseSecret
 	}
 
+	if mongodb.Spec.ClusterMode != nil {
+		if mongodb.Spec.ClusterMode.ReplicaSet != nil &&
+			mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret == nil {
+			mongodb.Spec.ClusterMode.ReplicaSet.KeyFileSecret = ddbOriginSpec.ClusterMode.ReplicaSet.KeyFileSecret
+		}
+	}
+
 	// If Monitoring Spec of new object is not given,
 	// Take Monitoring Settings from Dormant
 	if mongodb.Spec.Monitor == nil {
