@@ -20,7 +20,7 @@ show_help() {
     echo "    --uninstall                    uninstall kubedb deployment and staffs before running oprator"
     echo "    --purge                        purges kubedb crd objects and crds before running operator"
     echo "    --minikube                     run operator in local and connect with minikube"
-    echo "    --self-hosted                  deploy operator in cluster"
+    echo "    --selfhosted                  deploy operator in cluster"
 }
 
 while test $# -gt 0; do
@@ -34,7 +34,7 @@ while test $# -gt 0; do
             export SELF_HOSTED=0
             shift
             ;;
-        --self-hosted)
+        --selfhosted)
             export MINIKUBE=0
             export SELF_HOSTED=1
             shift

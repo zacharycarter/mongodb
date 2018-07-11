@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -26,20 +27,25 @@ const (
 
 var _ = Describe("MongoDB", func() {
 	var (
-		err         error
-		f           *framework.Invocation
-		mongodb     *api.MongoDB
-		snapshot    *api.Snapshot
-		secret      *core.Secret
-		skipMessage string
-		dbName      string
+		err                      error
+		f                        *framework.Invocation
+		mongodb                  *api.MongoDB
+		garbageMongoDB           *api.MongoDBList
+		snapshot                 *api.Snapshot
+		secret                   *core.Secret
+		skipMessage              string
+		skipSnapshotDataChecking bool
+		dbName                   string
 	)
 
 	BeforeEach(func() {
 		f = root.Invoke()
 		mongodb = f.MongoDB()
+		garbageMongoDB = new(api.MongoDBList)
 		snapshot = f.Snapshot()
+		secret = new(core.Secret)
 		skipMessage = ""
+		skipSnapshotDataChecking = true
 		dbName = "kubedb"
 	})
 
@@ -53,9 +59,18 @@ var _ = Describe("MongoDB", func() {
 	}
 
 	var deleteTestResource = func() {
+		if mongodb == nil {
+			Skip("Skipping")
+		}
 		By("Delete mongodb")
 		err = f.DeleteMongoDB(mongodb.ObjectMeta)
-		Expect(err).NotTo(HaveOccurred())
+		if err != nil {
+			if kerr.IsNotFound(err) {
+				// MongoDB was not created. Hence, rest of cleanup is not necessary.
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+		}
 
 		By("Wait for mongodb to be paused")
 		f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
@@ -69,11 +84,33 @@ var _ = Describe("MongoDB", func() {
 
 		By("Delete Dormant Database")
 		err = f.DeleteDormantDatabase(mongodb.ObjectMeta)
-		Expect(err).NotTo(HaveOccurred())
+		if !kerr.IsNotFound(err) {
+			Expect(err).NotTo(HaveOccurred())
+		}
 
 		By("Wait for mongodb resources to be wipedOut")
 		f.EventuallyWipedOut(mongodb.ObjectMeta).Should(Succeed())
 	}
+
+	AfterEach(func() {
+		// Delete test resource
+		deleteTestResource()
+
+		for _, mg := range garbageMongoDB.Items {
+			*mongodb = mg
+			// Delete test resource
+			deleteTestResource()
+		}
+
+		if !skipSnapshotDataChecking {
+			By("Check for snapshot data")
+			f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
+		}
+
+		if secret != nil {
+			f.DeleteSecret(secret.ObjectMeta)
+		}
+	})
 
 	Describe("Test", func() {
 		BeforeEach(func() {
@@ -85,6 +122,7 @@ var _ = Describe("MongoDB", func() {
 		Context("General", func() {
 
 			Context("With PVC", func() {
+
 				It("should run successfully", func() {
 					if skipMessage != "" {
 						Skip(skipMessage)
@@ -118,8 +156,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
-
-					deleteTestResource()
 				})
 			})
 		})
@@ -148,21 +184,12 @@ var _ = Describe("MongoDB", func() {
 					in.Spec.DoNotPause = false
 					return in
 				})
-
-				// Delete test resource
-				deleteTestResource()
 			})
 		})
 
 		Context("Snapshot", func() {
-			var skipDataCheck bool
-
-			AfterEach(func() {
-				f.DeleteSecret(secret.ObjectMeta)
-			})
-
 			BeforeEach(func() {
-				skipDataCheck = false
+				skipSnapshotDataChecking = false
 				snapshot.Spec.DatabaseName = mongodb.Name
 			})
 
@@ -181,23 +208,15 @@ var _ = Describe("MongoDB", func() {
 				By("Check for Succeeded snapshot")
 				f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
 
-				if !skipDataCheck {
+				if !skipSnapshotDataChecking {
 					By("Check for snapshot data")
 					f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
 				}
-
-				// Delete test resource
-				deleteTestResource()
-
-				if !skipDataCheck {
-					By("Check for snapshot data")
-					f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
-				}
 			}
 
-			FContext("In Local", func() {
+			Context("In Local", func() {
 				BeforeEach(func() {
-					skipDataCheck = true
+					skipSnapshotDataChecking = true
 					secret = f.SecretForLocalBackend()
 					snapshot.Spec.StorageSecretName = secret.Name
 					snapshot.Spec.Local = &api.LocalSpec{
@@ -211,7 +230,7 @@ var _ = Describe("MongoDB", func() {
 				It("should take Snapshot successfully", shouldTakeSnapshot)
 			})
 
-			FContext("In S3", func() {
+			Context("In S3", func() {
 				BeforeEach(func() {
 					secret = f.SecretForS3Backend()
 					snapshot.Spec.StorageSecretName = secret.Name
@@ -223,7 +242,7 @@ var _ = Describe("MongoDB", func() {
 				It("should take Snapshot successfully", shouldTakeSnapshot)
 			})
 
-			FContext("In GCS", func() {
+			Context("In GCS", func() {
 				BeforeEach(func() {
 					secret = f.SecretForGCSBackend()
 					snapshot.Spec.StorageSecretName = secret.Name
@@ -282,7 +301,7 @@ var _ = Describe("MongoDB", func() {
 						By("Check for Succeeded snapshot")
 						f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
 
-						if !skipDataCheck {
+						if !skipSnapshotDataChecking {
 							By("Check for snapshot data")
 							f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
 						}
@@ -304,7 +323,7 @@ var _ = Describe("MongoDB", func() {
 						By("Check for Succeeded snapshot")
 						f.EventuallySnapshotPhase(snapshot.ObjectMeta).Should(Equal(api.SnapshotPhaseSucceeded))
 
-						if !skipDataCheck {
+						if !skipSnapshotDataChecking {
 							By("Check for snapshot data")
 							f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
 						}
@@ -315,7 +334,7 @@ var _ = Describe("MongoDB", func() {
 
 						By("Wait for Deleting Snapshot")
 						f.EventuallySnapshot(mongodb.ObjectMeta).Should(BeFalse())
-						if !skipDataCheck {
+						if !skipSnapshotDataChecking {
 							By("Check for snapshot data")
 							f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
 						}
@@ -326,17 +345,9 @@ var _ = Describe("MongoDB", func() {
 						_, err = f.GetSnapshot(snapshot.ObjectMeta)
 						Expect(err).NotTo(HaveOccurred())
 
-						if !skipDataCheck {
+						if !skipSnapshotDataChecking {
 							By(fmt.Sprintf("Check for old snapshot %v data", snapshot.Name))
 							f.EventuallySnapshotDataFound(snapshot).Should(BeTrue())
-						}
-
-						// Delete test resource
-						deleteTestResource()
-
-						if !skipDataCheck {
-							By("Check for snapshot data")
-							f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
 						}
 					})
 				})
@@ -389,19 +400,13 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
-
-					// Delete test resource
-					deleteTestResource()
 				})
 
 			})
 
 			Context("With Snapshot", func() {
-				AfterEach(func() {
-					f.DeleteSecret(secret.ObjectMeta)
-				})
-
 				BeforeEach(func() {
+					skipSnapshotDataChecking = false
 					secret = f.SecretForGCSBackend()
 					snapshot.Spec.StorageSecretName = secret.Name
 					snapshot.Spec.GCS = &api.GCSSpec{
@@ -435,9 +440,10 @@ var _ = Describe("MongoDB", func() {
 					oldMongoDB, err := f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
 
+					garbageMongoDB.Items = append(garbageMongoDB.Items, *oldMongoDB)
+
 					By("Create mongodb from snapshot")
 					mongodb = f.MongoDB()
-
 					mongodb.Spec.Init = &api.InitSpec{
 						SnapshotSource: &api.SnapshotSourceSpec{
 							Namespace: snapshot.Namespace,
@@ -450,12 +456,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
-
-					// Delete test resource
-					deleteTestResource()
-					mongodb = oldMongoDB
-					// Delete test resource
-					deleteTestResource()
 				})
 			})
 		})
@@ -515,9 +515,6 @@ var _ = Describe("MongoDB", func() {
 
 					_, err = f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
-
-					// Delete test resource
-					deleteTestResource()
 				})
 			})
 
@@ -555,9 +552,6 @@ var _ = Describe("MongoDB", func() {
 
 					_, err = f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
-
-					// Delete test resource
-					deleteTestResource()
 				})
 			})
 
@@ -604,29 +598,20 @@ var _ = Describe("MongoDB", func() {
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
-					_, err := f.GetMongoDB(mongodb.ObjectMeta)
+					mg, err := f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
 
-					// Delete test resource
-					deleteTestResource()
+					*mongodb = *mg
 					if usedInitScript {
 						Expect(mongodb.Spec.Init).ShouldNot(BeNil())
-						if usedInitScript {
-							Expect(mongodb.Spec.Init).ShouldNot(BeNil())
-							_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
-							Expect(err).To(HaveOccurred())
-						}
+						_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+						Expect(err).To(HaveOccurred())
 					}
 				})
 			})
 
 			Context("With Snapshot Init", func() {
-				var skipDataCheck bool
-				AfterEach(func() {
-					f.DeleteSecret(secret.ObjectMeta)
-				})
 				BeforeEach(func() {
-					skipDataCheck = false
 					usedInitSnapshot = true
 					secret = f.SecretForGCSBackend()
 					snapshot.Spec.StorageSecretName = secret.Name
@@ -659,6 +644,8 @@ var _ = Describe("MongoDB", func() {
 
 					oldMongoDB, err := f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
+
+					garbageMongoDB.Items = append(garbageMongoDB.Items, *oldMongoDB)
 
 					By("Create mongodb from snapshot")
 					mongodb = f.MongoDB()
@@ -700,19 +687,8 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					if usedInitSnapshot {
-						Expect(mongodb.Spec.Init).ShouldNot(BeNil())
-						_, err := meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
+						_, err = meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
 						Expect(err).NotTo(HaveOccurred())
-					}
-
-					// Delete test resource
-					deleteTestResource()
-					mongodb = oldMongoDB
-					// Delete test resource
-					deleteTestResource()
-					if !skipDataCheck {
-						By("Check for snapshot data")
-						f.EventuallySnapshotDataFound(snapshot).Should(BeFalse())
 					}
 				})
 			})
@@ -771,18 +747,12 @@ var _ = Describe("MongoDB", func() {
 							Expect(err).To(HaveOccurred())
 						}
 					}
-
-					// Delete test resource
-					deleteTestResource()
 				})
 			})
 
 		})
 
 		Context("SnapshotScheduler", func() {
-			AfterEach(func() {
-				f.DeleteSecret(secret.ObjectMeta)
-			})
 
 			Context("With Startup", func() {
 
@@ -805,8 +775,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Verify multiple Succeeded Snapshot")
 					f.EventuallyMultipleSnapshotFinishedProcessing(mongodb.ObjectMeta).Should(Succeed())
-
-					deleteTestResource()
 				}
 
 				Context("with local", func() {
@@ -965,8 +933,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Verify multiple Succeeded Snapshot")
 					f.EventuallyMultipleSnapshotFinishedProcessing(mongodb.ObjectMeta).Should(Succeed())
-
-					deleteTestResource()
 				})
 			})
 		})
@@ -1001,9 +967,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
-
-					// Delete test resource
-					deleteTestResource()
 				})
 
 			})
@@ -1032,7 +995,6 @@ var _ = Describe("MongoDB", func() {
 					err = f.CreateMongoDB(mongodb)
 					Expect(err).To(HaveOccurred())
 				})
-
 			})
 
 			Context("Update Envs", func() {
@@ -1075,11 +1037,7 @@ var _ = Describe("MongoDB", func() {
 					})
 
 					Expect(err).To(HaveOccurred())
-
-					// Delete test resource
-					deleteTestResource()
 				})
-
 			})
 		})
 	})

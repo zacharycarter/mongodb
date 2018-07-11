@@ -129,11 +129,9 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 				},
 			},
 			Args: []string{
-				"--dbpath",
-				dataDirectoryPath,
+				"--dbpath=" + dataDirectoryPath,
 				"--auth",
-				"--port",
-				string(MongoDbPort),
+				"--port=" + string(MongoDbPort),
 			},
 			Resources: mongodb.Spec.Resources,
 		})

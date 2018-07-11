@@ -259,7 +259,6 @@ var preconditionSpecFields = []string{
 	"spec.nodeSelector",
 	"spec.init",
 	"spec.env",
-	"spec.configSource",
 }
 
 func preconditionFailedError(kind string) error {
