@@ -31,29 +31,18 @@ func (c *Controller) upsertConfigSourceVolume(statefulSet *apps.StatefulSet, mon
 					Name:      initialConfigDirectoryName,
 					MountPath: initialConfigDirectoryPath,
 				},
-				{
-					Name:      configDirectoryName,
-					MountPath: configDirectoryPath,
-				},
 			}
 			statefulSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = core_util.UpsertVolumeMount(
 				statefulSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, volumeMounts...)
 		}
 	}
 
-	volumes := []core.Volume{
-		{
-			Name:         initialConfigDirectoryName,
-			VolumeSource: *mongodb.Spec.ConfigSource,
-		},
-		{
-			Name: configDirectoryName,
-			VolumeSource: core.VolumeSource{
-				EmptyDir: &core.EmptyDirVolumeSource{},
-			},
-		},
+	volumes := core.Volume{
+
+		Name:         initialConfigDirectoryName,
+		VolumeSource: *mongodb.Spec.ConfigSource,
 	}
-	statefulSet.Spec.Template.Spec.Volumes = core_util.UpsertVolume(statefulSet.Spec.Template.Spec.Volumes, volumes...)
+	statefulSet.Spec.Template.Spec.Volumes = core_util.UpsertVolume(statefulSet.Spec.Template.Spec.Volumes, volumes)
 
 	return statefulSet
 }

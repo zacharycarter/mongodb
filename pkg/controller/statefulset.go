@@ -174,7 +174,6 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			)
 		}
 		// Set Admin Secret as MYSQL_ROOT_PASSWORD env variable
-		in = c.upsertInstallInitcheck(in, mongodb)
 		in = upsertEnv(in, mongodb)
 		in = upsertUserEnv(in, mongodb)
 		in = upsertDataVolume(in, mongodb)
@@ -264,6 +263,10 @@ func (c *Controller) upsertInstallInitContainer(statefulSet *apps.StatefulSet, m
 				Name:      workDirectoryName,
 				MountPath: workDirectoryPath,
 			},
+			{
+				Name:      configDirectoryName,
+				MountPath: configDirectoryPath,
+			},
 		},
 	}
 	if mongodb.Spec.ClusterMode != nil &&
@@ -288,62 +291,67 @@ func (c *Controller) upsertInstallInitContainer(statefulSet *apps.StatefulSet, m
 	return statefulSet
 }
 
-// Init container for both ReplicaSet and Standalone instances
-func (c *Controller) upsertInstallInitcheck(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
-	installContainer := core.Container{
-		Name:    "check",
-		Image:   "busybox",
-		Command: []string{"sh"},
-		Args: []string{
-			"-c",
-			`
-			set -e
-          	set -x
-
-          	ls -la /work-dir
-          	ls -la /configdb-readonly
-          	ls -la /keydir-readonly
-          	ls -la /data/configdb
-			cat /work-dir/on-start.sh
-			`,
-		},
-		VolumeMounts: []core.VolumeMount{
-			{
-				Name:      workDirectoryName,
-				MountPath: workDirectoryPath,
-			},
-			{
-				Name:      initialConfigDirectoryName,
-				MountPath: initialConfigDirectoryPath,
-			},
-			{
-				Name:      configDirectoryName,
-				MountPath: configDirectoryPath,
-			},
-		},
-	}
-	if mongodb.Spec.ClusterMode != nil &&
-		mongodb.Spec.ClusterMode.ReplicaSet != nil {
-		installContainer.VolumeMounts = core_util.UpsertVolumeMount(installContainer.VolumeMounts, core.VolumeMount{
-			Name:      initialKeyDirectoryName,
-			MountPath: initialKeyDirectoryPath,
-		})
-	}
-
-	initContainers := statefulSet.Spec.Template.Spec.InitContainers
-	statefulSet.Spec.Template.Spec.InitContainers = core_util.UpsertContainer(initContainers, installContainer)
-	return statefulSet
-}
+//// Init container for both ReplicaSet and Standalone instances
+//func (c *Controller) upsertInstallInitcheck(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
+//	installContainer := core.Container{
+//		Name:    "check",
+//		Image:   "busybox",
+//		Command: []string{"sh"},
+//		Args: []string{
+//			"-c",
+//			`
+//			set -e
+//          	set -x
+//
+//          	ls -la /work-dir
+//          	ls -la /configdb-readonly
+//          	ls -la /keydir-readonly
+//          	ls -la /data/configdb
+//			cat /work-dir/on-start.sh
+//			`,
+//		},
+//		VolumeMounts: []core.VolumeMount{
+//			{
+//				Name:      workDirectoryName,
+//				MountPath: workDirectoryPath,
+//			},
+//			{
+//				Name:      initialConfigDirectoryName,
+//				MountPath: initialConfigDirectoryPath,
+//			},
+//			{
+//				Name:      configDirectoryName,
+//				MountPath: configDirectoryPath,
+//			},
+//		},
+//	}
+//	if mongodb.Spec.ClusterMode != nil &&
+//		mongodb.Spec.ClusterMode.ReplicaSet != nil {
+//		installContainer.VolumeMounts = core_util.UpsertVolumeMount(installContainer.VolumeMounts, core.VolumeMount{
+//			Name:      initialKeyDirectoryName,
+//			MountPath: initialKeyDirectoryPath,
+//		})
+//	}
+//
+//	initContainers := statefulSet.Spec.Template.Spec.InitContainers
+//	statefulSet.Spec.Template.Spec.InitContainers = core_util.UpsertContainer(initContainers, installContainer)
+//	return statefulSet
+//}
 
 func upsertDataVolume(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.StatefulSet {
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
-			volumeMount := core.VolumeMount{
+			volumeMount := []core.VolumeMount{{
 				Name:      dataDirectoryName,
 				MountPath: dataDirectoryPath,
+			},
+				{
+					Name:      configDirectoryName,
+					MountPath: configDirectoryPath,
+				},
 			}
 			volumeMounts := container.VolumeMounts
-			volumeMounts = core_util.UpsertVolumeMount(volumeMounts, volumeMount)
+			volumeMounts = core_util.UpsertVolumeMount(volumeMounts, volumeMount...)
 			statefulSet.Spec.Template.Spec.Containers[i].VolumeMounts = volumeMounts
 
 			pvcSpec := mongodb.Spec.Storage
@@ -369,6 +377,14 @@ func upsertDataVolume(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps
 			volumeClaims := statefulSet.Spec.VolumeClaimTemplates
 			volumeClaims = core_util.UpsertVolumeClaim(volumeClaims, volumeClaim)
 			statefulSet.Spec.VolumeClaimTemplates = volumeClaims
+
+			volumes := core.Volume{
+				Name: configDirectoryName,
+				VolumeSource: core.VolumeSource{
+					EmptyDir: &core.EmptyDirVolumeSource{},
+				},
+			}
+			statefulSet.Spec.Template.Spec.Volumes = core_util.UpsertVolume(statefulSet.Spec.Template.Spec.Volumes, volumes)
 
 			break
 		}
