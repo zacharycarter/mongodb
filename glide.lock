@@ -1,5 +1,5 @@
-hash: 8f18df5262b4fa235ed4ed1ee2ed851201af5f106ff92402555c28c813be4c4c
-updated: 2018-07-11T12:25:53.802856032+06:00
+hash: a5a90a821f9e3873e8a70d1d87ac767a3bfea85ecad8ababbf28cbd3b467b9de
+updated: 2018-07-12T10:31:51.342401176+06:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -197,7 +197,7 @@ imports:
   subpackages:
   - pkg/client/monitoring/v1
 - name: github.com/cpuguy83/go-md2man
-  version: 691ee98543af2f262f35fbb54bdd42f00b9b9cc5
+  version: 71acacd42f85e5e82f70a55327789582a5200a90
   subpackages:
   - md2man
 - name: github.com/davecgh/go-spew
@@ -219,9 +219,9 @@ imports:
 - name: github.com/emicklei/go-restful-swagger12
   version: dcef7f55730566d41eae5db10e7d6981829720f6
 - name: github.com/evanphx/json-patch
-  version: 8bbe9d8e54d10a2f358e6da5085efe01b5710337
+  version: 944e07253867aacae43c04b2e6a239005443f33a
 - name: github.com/ghodss/yaml
-  version: e9ed3c6dfb39bb1a32197cb10d527906fe4da4b6
+  version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
 - name: github.com/globalsign/mgo
   version: 113d3961e7311526535a1ef7042196563d442761
   subpackages:
@@ -230,7 +230,7 @@ imports:
 - name: github.com/go-bongo/bongo
   version: 58e3a1fbb5ea15dde8675b60becb2a9950e70164
 - name: github.com/go-ini/ini
-  version: cec2bdc49009247305a260b082a18e802d0fe292
+  version: af26abd521cd7697481572fdbc4a53cbea3dde1b
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -245,7 +245,7 @@ imports:
   - proto
   - sortkeys
 - name: github.com/golang/glog
-  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/groupcache
   version: 02826c3e79038b59d737d3b1c0a1d937f71a4433
   subpackages:
