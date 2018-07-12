@@ -40,7 +40,7 @@ var _ = Describe("MongoDB", func() {
 
 	BeforeEach(func() {
 		f = root.Invoke()
-		mongodb = f.MongoDB()
+		mongodb = f.MongoDBStandalone()
 		garbageMongoDB = new(api.MongoDBList)
 		snapshot = f.Snapshot()
 		secret = new(core.Secret)
@@ -443,7 +443,7 @@ var _ = Describe("MongoDB", func() {
 					garbageMongoDB.Items = append(garbageMongoDB.Items, *oldMongoDB)
 
 					By("Create mongodb from snapshot")
-					mongodb = f.MongoDB()
+					mongodb = f.MongoDBStandalone()
 					mongodb.Spec.Init = &api.InitSpec{
 						SnapshotSource: &api.SnapshotSourceSpec{
 							Namespace: snapshot.Namespace,
@@ -648,7 +648,7 @@ var _ = Describe("MongoDB", func() {
 					garbageMongoDB.Items = append(garbageMongoDB.Items, *oldMongoDB)
 
 					By("Create mongodb from snapshot")
-					mongodb = f.MongoDB()
+					mongodb = f.MongoDBStandalone()
 					mongodb.Spec.Init = &api.InitSpec{
 						SnapshotSource: &api.SnapshotSourceSpec{
 							Namespace: snapshot.Namespace,

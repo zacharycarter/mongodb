@@ -14,7 +14,7 @@ TAG="latest"
 build() {
     pushd "$REPO_ROOT/hack/docker/mongo-init"
 
-    local cmd="docker build -t $DOCKER_REGISTRY/$IMG ."
+    local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
     echo $cmd; $cmd
 
     popd

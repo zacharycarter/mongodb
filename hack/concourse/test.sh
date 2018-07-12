@@ -31,16 +31,16 @@ go get -u github.com/pharmer/pharmer
 
 function cleanup() {
   # Workload Descriptions if the test fails
-  cowsay -f tux "Describe Deployment"
-  kubectl describe deploy -n kube-system -l app=kubedb
-  cowsay -f tux "Describe Replica Set"
-  kubectl describe replicasets -n kube-system -l app=kubedb
+  cowsay -f tux "Describe Deployment" || true
+  kubectl describe deploy -n kube-system -l app=kubedb || true
+  cowsay -f tux "Describe Replica Set" || true
+  kubectl describe replicasets -n kube-system -l app=kubedb || true
 
-  cowsay -f tux "Describe Pod"
-  kubectl describe pods -n kube-system -l app=kubedb
-  cowsay -f tux "Describe Nodes"
-  kubectl get nodes
-  kubectl describe nodes
+  cowsay -f tux "Describe Pod" || true
+  kubectl describe pods -n kube-system -l app=kubedb || true
+  cowsay -f tux "Describe Nodes" || true
+  kubectl get nodes || true
+  kubectl describe nodes || true
 
   # delete cluster on exit
   pharmer get cluster || true
@@ -139,9 +139,9 @@ EOF
 source ./hack/deploy/setup.sh --docker-registry=kubedbci
 ./hack/make.py test e2e --v=1 --storageclass=standard --selfhosted-operator=true
 
-cowsay -f tux "Describe Pod"
-kubectl get pods --all-namespaces
+cowsay -f tux "Describe Pod" || true
+kubectl get pods --all-namespaces || true
 kubectl describe pods -n kube-system -l app=kubedb || true
-cowsay -f tux "Describe Nodes"
+cowsay -f tux "Describe Nodes" || true
 kubectl get nodes || true
 kubectl describe nodes || true

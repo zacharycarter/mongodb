@@ -16,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (f *Invocation) MongoDB() *api.MongoDB {
+func (f *Invocation) MongoDBStandalone() *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongodb"),
@@ -38,6 +38,38 @@ func (f *Invocation) MongoDB() *api.MongoDB {
 		},
 	}
 }
+
+func (f *Invocation) MongoDBRS() *api.MongoDB {
+	dbName := rand.WithUniqSuffix("mongodb-rs")
+	return &api.MongoDB{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      dbName,
+			Namespace: f.namespace,
+			Labels: map[string]string{
+				"app": f.app,
+			},
+		},
+		Spec: api.MongoDBSpec{
+			Version: jsonTypes.StrYo(DBVersion),
+			Replicas: types.Int32P(3),
+			ClusterMode: &api.MongoDBClusterMode{
+					ReplicaSet: &api.MongoDBReplicaSet{
+						Name: dbName,
+					},
+				},
+			Storage: core.PersistentVolumeClaimSpec{
+				Resources: core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceStorage: resource.MustParse("1Gi"),
+					},
+				},
+				StorageClassName: types.StringP(f.StorageClass),
+			},
+		},
+	}
+}
+
+
 
 func (f *Framework) CreateMongoDB(obj *api.MongoDB) error {
 	_, err := f.extClient.MongoDBs(obj.Namespace).Create(obj)
