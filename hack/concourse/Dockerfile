@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
     libdevmapper-dev \
     iptables \
     ca-certificates \
+    cowsay \
     && \
+    mv /usr/games/cowsay /bin && \
     curl -fL "https://download.docker.com/linux/static/${DOCKER_CHANNEL}/x86_64/docker-${DOCKER_VERSION}.tgz" | tar zx && \
     mv docker/* /bin/ && chmod +x /bin/docker* && \
     rm -rf /var/cache/apt/* && \

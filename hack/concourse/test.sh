@@ -31,16 +31,16 @@ go get -u github.com/pharmer/pharmer
 
 function cleanup() {
   # Workload Descriptions if the test fails
-  if [ $? -ne 0 ]; then
-    echo ""
-    kubectl describe deploy -n kube-system -l app=kubedb || true
-    echo ""
-    echo ""
-    kubectl describe replicasets -n kube-system -l app=kubedb || true
-    echo ""
-    echo ""
-    kubectl describe pods -n kube-system -l app=kubedb || true
-  fi
+  cowsay -f tux "Describe Deployment"
+  kubectl describe deploy -n kube-system -l app=kubedb
+  cowsay -f tux "Describe Replica Set"
+  kubectl describe replicasets -n kube-system -l app=kubedb
+
+  cowsay -f tux "Describe Pod"
+  kubectl describe pods -n kube-system -l app=kubedb
+  cowsay -f tux "Describe Nodes"
+  kubectl get nodes
+  kubectl describe nodes
 
   # delete cluster on exit
   pharmer get cluster || true
@@ -139,5 +139,9 @@ EOF
 source ./hack/deploy/setup.sh --docker-registry=kubedbci
 ./hack/make.py test e2e --v=1 --storageclass=standard --selfhosted-operator=true
 
-# state of operator pod
+cowsay -f tux "Describe Pod"
+kubectl get pods --all-namespaces
 kubectl describe pods -n kube-system -l app=kubedb || true
+cowsay -f tux "Describe Nodes"
+kubectl get nodes || true
+kubectl describe nodes || true
