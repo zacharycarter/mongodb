@@ -123,7 +123,7 @@ var _ = Describe("MongoDB", func() {
 
 			Context("With PVC", func() {
 
-				It("should run successfully", func() {
+				var shouldRunWithPVC = func() {
 					if skipMessage != "" {
 						Skip(skipMessage)
 					}
@@ -156,7 +156,18 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
+				}
+
+				It("should run successfully", shouldRunWithPVC)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+					})
+
+					FIt("should run successfully", shouldRunWithPVC)
 				})
+
 			})
 		})
 
@@ -228,6 +239,14 @@ var _ = Describe("MongoDB", func() {
 				})
 
 				It("should take Snapshot successfully", shouldTakeSnapshot)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should take Snapshot successfully", shouldTakeSnapshot)
+				})
 			})
 
 			Context("In S3", func() {
@@ -240,6 +259,14 @@ var _ = Describe("MongoDB", func() {
 				})
 
 				It("should take Snapshot successfully", shouldTakeSnapshot)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should take Snapshot successfully", shouldTakeSnapshot)
+				})
 			})
 
 			Context("In GCS", func() {
@@ -249,6 +276,14 @@ var _ = Describe("MongoDB", func() {
 					snapshot.Spec.GCS = &api.GCSSpec{
 						Bucket: os.Getenv(GCS_BUCKET_NAME),
 					}
+				})
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should take Snapshot successfully", shouldTakeSnapshot)
 				})
 
 				Context("Without Init", func() {
@@ -364,6 +399,14 @@ var _ = Describe("MongoDB", func() {
 				})
 
 				It("should take Snapshot successfully", shouldTakeSnapshot)
+
+				FContext("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should take Snapshot successfully", shouldTakeSnapshot)
+				})
 			})
 
 			Context("In Swift", func() {
@@ -376,6 +419,13 @@ var _ = Describe("MongoDB", func() {
 				})
 
 				It("should take Snapshot successfully", shouldTakeSnapshot)
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						snapshot.Spec.DatabaseName = mongodb.Name
+					})
+					It("should take Snapshot successfully", shouldTakeSnapshot)
+				})
 			})
 		})
 

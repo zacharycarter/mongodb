@@ -50,13 +50,13 @@ func (f *Invocation) MongoDBRS() *api.MongoDB {
 			},
 		},
 		Spec: api.MongoDBSpec{
-			Version: jsonTypes.StrYo(DBVersion),
+			Version:  jsonTypes.StrYo(DBVersion),
 			Replicas: types.Int32P(3),
 			ClusterMode: &api.MongoDBClusterMode{
-					ReplicaSet: &api.MongoDBReplicaSet{
-						Name: dbName,
-					},
+				ReplicaSet: &api.MongoDBReplicaSet{
+					Name: dbName,
 				},
+			},
 			Storage: core.PersistentVolumeClaimSpec{
 				Resources: core.ResourceRequirements{
 					Requests: core.ResourceList{
@@ -68,8 +68,6 @@ func (f *Invocation) MongoDBRS() *api.MongoDB {
 		},
 	}
 }
-
-
 
 func (f *Framework) CreateMongoDB(obj *api.MongoDB) error {
 	_, err := f.extClient.MongoDBs(obj.Namespace).Create(obj)

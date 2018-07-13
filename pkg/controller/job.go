@@ -18,10 +18,10 @@ const (
 )
 
 func GetHostName(mongodb *api.MongoDB) string {
-	if mongodb.Spec.ClusterMode != nil &&
-		mongodb.Spec.ClusterMode.ReplicaSet != nil {
-		return mongodb.Spec.ClusterMode.ReplicaSet.Name + "/" + mongodb.ServiceName()
-	}
+	//if mongodb.Spec.ClusterMode != nil &&
+	//	mongodb.Spec.ClusterMode.ReplicaSet != nil {
+	//	return mongodb.Spec.ClusterMode.ReplicaSet.Name + "/" + mongodb.ServiceName()
+	//}
 	return mongodb.ServiceName()
 }
 

@@ -11,7 +11,6 @@ import (
 	core_util "github.com/appscode/kutil/core/v1"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/apimachinery/pkg/eventer"
-	"github.com/the-redback/go-oneliners"
 	apps "k8s.io/api/apps/v1"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -185,8 +184,6 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			in = c.upsertConfigSourceVolume(in, mongodb)
 		}
 
-		oneliners.PrettyJson(in, "before rs args")
-
 		if mongodb.Spec.ClusterMode != nil &&
 			mongodb.Spec.ClusterMode.ReplicaSet != nil {
 			in = c.upsertRSInitContainer(in, mongodb)
@@ -196,7 +193,6 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 				RunAsNonRoot: types.BoolP(true),
 				RunAsUser:    types.Int64P(999),
 			}
-			oneliners.PrettyJson(in, "after rs args")
 		}
 
 		in.Spec.Template.Spec.NodeSelector = mongodb.Spec.NodeSelector
@@ -226,11 +222,10 @@ func addContainerProbe(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *app
 						Command: cmd,
 					},
 				},
-				FailureThreshold:    3,
-				InitialDelaySeconds: 30,
-				PeriodSeconds:       10,
-				SuccessThreshold:    1,
-				TimeoutSeconds:      5,
+				FailureThreshold: 3,
+				PeriodSeconds:    10,
+				SuccessThreshold: 1,
+				TimeoutSeconds:   5,
 			}
 			statefulSet.Spec.Template.Spec.Containers[i].ReadinessProbe = &core.Probe{
 				Handler: core.Handler{
@@ -238,11 +233,10 @@ func addContainerProbe(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *app
 						Command: cmd,
 					},
 				},
-				FailureThreshold:    3,
-				InitialDelaySeconds: 5,
-				PeriodSeconds:       10,
-				SuccessThreshold:    1,
-				TimeoutSeconds:      1,
+				FailureThreshold: 3,
+				PeriodSeconds:    10,
+				SuccessThreshold: 1,
+				TimeoutSeconds:   1,
 			}
 		}
 	}
