@@ -1,6 +1,9 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # ref: https://github.com/kubernetes/charts/blob/master/stable/mongodb-replicaset/init/on-start.sh
+
+set -x # todo: delete
+echo ">>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<"
 
 replica_set="$REPLICA_SET"
 script_name=${0##*/}
@@ -132,6 +135,25 @@ if mongo "${ssl_args[@]}" --eval "rs.status()" | grep "no replset config has bee
         log "Creating admin user..."
         mongo admin "${ssl_args[@]}" --eval "db.createUser({user: '$admin_user', pwd: '$admin_password', roles: [{role: 'root', db: 'admin'}]})"
     fi
+
+     # Initialize Part for KubeDB. ref: https://github.com/docker-library/mongo/blob/a499e81e743b05a5237e2fd700c0284b17d3d416/3.4/docker-entrypoint.sh#L302
+    # Start
+    export MONGO_INITDB_DATABASE="${MONGO_INITDB_DATABASE:-test}"
+
+	echo
+	ls -la /docker-entrypoint-initdb.d
+	for f in /docker-entrypoint-initdb.d/*; do
+		case "$f" in
+			*.sh) echo "$0: running $f"; . "$f" ;;
+			*.js) echo "$0: running $f"; mongo admin --host "$peer" "${admin_creds[@]}" "${ssl_args[@]}" "$MONGO_INITDB_DATABASE" "$f"; echo ;;
+			*.js) echo "$0: running $f"; mongo admin --host "$service_name" "${admin_creds[@]}" "${ssl_args[@]}" -d "$MONGO_INITDB_DATABASE" "$f"; echo ;;
+			*.js) echo "$0: >>>>>>>>>>>>>>>>>> running $f"; mongo admin --host "$peer" "${admin_creds[@]}" "${ssl_args[@]}" -d "$MONGO_INITDB_DATABASE" < "$f"; echo ;;
+			*.js) echo "$0: >>>>>>>>>>>>>>>>>> running $f"; mongo admin --host "$service_name" "${admin_creds[@]}" "${ssl_args[@]}" -d "$MONGO_INITDB_DATABASE" < "$f"; echo ;;
+			*)    echo "$0: ignoring $f" ;;
+		esac
+		echo
+	done
+	# END
 
     log "Done."
 fi

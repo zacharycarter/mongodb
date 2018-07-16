@@ -148,6 +148,10 @@ func setDefaultsFromDormantDB(extClient cs.Interface, mongodb *api.MongoDB) erro
 		}
 	}
 
+	if mongodb.Spec.ConfigSource == nil {
+		mongodb.Spec.ConfigSource = ddbOriginSpec.ConfigSource
+	}
+
 	// If Monitoring Spec of new object is not given,
 	// Take Monitoring Settings from Dormant
 	if mongodb.Spec.Monitor == nil {
