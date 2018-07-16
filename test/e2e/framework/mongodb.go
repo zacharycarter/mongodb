@@ -51,7 +51,7 @@ func (f *Invocation) MongoDBRS() *api.MongoDB {
 		},
 		Spec: api.MongoDBSpec{
 			Version:  jsonTypes.StrYo(DBVersion),
-			Replicas: types.Int32P(3),
+			Replicas: types.Int32P(2),
 			ClusterMode: &api.MongoDBClusterMode{
 				ReplicaSet: &api.MongoDBReplicaSet{
 					Name: dbName,
