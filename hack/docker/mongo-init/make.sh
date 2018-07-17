@@ -1,5 +1,5 @@
 #!/bin/bash
-set -xeou pipefail
+set -eou pipefail
 
 GOPATH=$(go env GOPATH)
 REPO_ROOT=$GOPATH/src/github.com/kubedb/mongodb
@@ -10,6 +10,8 @@ source "$REPO_ROOT/hack/libbuild/common/kubedb_image.sh"
 DOCKER_REGISTRY=${DOCKER_REGISTRY:-kubedb}
 IMG=mongo-init
 TAG="latest"
+
+TAG_STRATEGY=${TAG_STRATEGY:-}
 
 build() {
     pushd "$REPO_ROOT/hack/docker/mongo-init"

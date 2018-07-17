@@ -145,10 +145,7 @@ if mongo "${ssl_args[@]}" --eval "rs.status()" | grep "no replset config has bee
 	for f in /docker-entrypoint-initdb.d/*; do
 		case "$f" in
 			*.sh) echo "$0: running $f"; . "$f" ;;
-			*.js) #echo "$0: running $f 1"; mongo "$MONGO_INITDB_DATABASE"  "$f" ;;
-	               echo "$0: running $f 2 "; mongo --host "$service_name" "$MONGO_INITDB_DATABASE"  "$f" ;
-			     # echo "$0: running $f"; mongo --host "$service_name" "${admin_creds[@]}" "${ssl_args[@]}" "$MONGO_INITDB_DATABASE"  "$f" ;
-			    #  echo "$0: running $f 3"; mongo admin --host "$service_name" "${admin_creds[@]}" "${ssl_args[@]}" "$f" ;;
+			*.js) echo "$0: running $f 1"; mongo "$MONGO_INITDB_DATABASE" "${admin_creds[@]}" "${ssl_args[@]}" --authenticationDatabase admin "$f" ;;
 			*)    echo "$0: ignoring $f" ;;
 		esac
 		echo

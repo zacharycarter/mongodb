@@ -19,7 +19,6 @@ import (
 )
 
 func (c *Controller) create(mongodb *api.MongoDB) error {
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>. Create!!!!!!!!")
 	if err := validator.ValidateMongoDB(c.Client, c.ExtClient, mongodb); err != nil {
 		if ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb); rerr == nil {
 			c.recorder.Event(
@@ -269,7 +268,6 @@ func (c *Controller) initialize(mongodb *api.MongoDB) error {
 }
 
 func (c *Controller) pause(mongodb *api.MongoDB) error {
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>> Pause!!!!!!!!")
 	if _, err := c.createDormantDatabase(mongodb); err != nil {
 		if kerr.IsAlreadyExists(err) {
 			// if already exists, check if it is database of another Kind and return error in that case.

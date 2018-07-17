@@ -55,7 +55,7 @@ func (m *Connection) Connect() (err error) {
 
 	m.Session = session
 
-	m.Session.SetMode(mgo.Monotonic, true)
+	m.Session.SetMode(mgo.Eventual, true)
 	return nil
 }
 

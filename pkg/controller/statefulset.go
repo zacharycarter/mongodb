@@ -186,11 +186,7 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			mongodb.Spec.ClusterMode.ReplicaSet != nil {
 			in = c.upsertRSInitContainer(in, mongodb)
 			in = upsertRSArgs(in, mongodb)
-			in.Spec.Template.Spec.SecurityContext = &core.PodSecurityContext{
-				FSGroup:      types.Int64P(999),
-				RunAsNonRoot: types.BoolP(true),
-				RunAsUser:    types.Int64P(999),
-			}
+
 		}
 
 		if mongodb.Spec.Init != nil && mongodb.Spec.Init.ScriptSource != nil {
@@ -432,7 +428,6 @@ func upsertUserEnv(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.St
 }
 
 func upsertInitScript(statefulSet *apps.StatefulSet, script core.VolumeSource) *apps.StatefulSet {
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 1")
 
 	volume := core.Volume{
 		Name:         "initial-script",
@@ -449,12 +444,8 @@ func upsertInitScript(statefulSet *apps.StatefulSet, script core.VolumeSource) *
 		volume,
 	)
 
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 2")
-
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 3")
 		if container.Name == api.ResourceSingularMongoDB {
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 4")
 			statefulSet.Spec.Template.Spec.Containers[i].VolumeMounts = core_util.UpsertVolumeMount(
 				container.VolumeMounts,
 				volumeMount,
@@ -462,12 +453,9 @@ func upsertInitScript(statefulSet *apps.StatefulSet, script core.VolumeSource) *
 			break
 		}
 	}
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 5")
 
 	for i, container := range statefulSet.Spec.Template.Spec.InitContainers {
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! 6")
 		if container.Name == InitBootstrapContainerName {
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>> ting tong! inside init container!")
 			statefulSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = core_util.UpsertVolumeMount(
 				container.VolumeMounts,
 				volumeMount,

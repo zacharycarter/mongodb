@@ -23,6 +23,11 @@ func upsertRSArgs(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.Sta
 			}
 		}
 	}
+	statefulSet.Spec.Template.Spec.SecurityContext = &core.PodSecurityContext{
+		FSGroup:      types.Int64P(999),
+		RunAsNonRoot: types.BoolP(true),
+		RunAsUser:    types.Int64P(999),
+	}
 	return statefulSet
 }
 
