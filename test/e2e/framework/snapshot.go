@@ -15,13 +15,13 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-func (f *Invocation) Snapshot() *api.Snapshot {
+func (i *Invocation) Snapshot() *api.Snapshot {
 	return &api.Snapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("snapshot"),
-			Namespace: f.namespace,
+			Namespace: i.namespace,
 			Labels: map[string]string{
-				"app": f.app,
+				"app": i.app,
 				api.LabelDatabaseKind: api.ResourceKindMongoDB,
 			},
 		},

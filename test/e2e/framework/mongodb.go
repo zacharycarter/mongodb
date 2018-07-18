@@ -16,13 +16,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (f *Invocation) MongoDBStandalone() *api.MongoDB {
+func (i *Invocation) MongoDBStandalone() *api.MongoDB {
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rand.WithUniqSuffix("mongodb"),
-			Namespace: f.namespace,
+			Namespace: i.namespace,
 			Labels: map[string]string{
-				"app": f.app,
+				"app": i.app,
 			},
 		},
 		Spec: api.MongoDBSpec{
@@ -33,20 +33,20 @@ func (f *Invocation) MongoDBStandalone() *api.MongoDB {
 						core.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP(f.StorageClass),
+				StorageClassName: types.StringP(i.StorageClass),
 			},
 		},
 	}
 }
 
-func (f *Invocation) MongoDBRS() *api.MongoDB {
+func (i *Invocation) MongoDBRS() *api.MongoDB {
 	dbName := rand.WithUniqSuffix("mongodb-rs")
 	return &api.MongoDB{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbName,
-			Namespace: f.namespace,
+			Namespace: i.namespace,
 			Labels: map[string]string{
-				"app": f.app,
+				"app": i.app,
 			},
 		},
 		Spec: api.MongoDBSpec{
@@ -63,7 +63,7 @@ func (f *Invocation) MongoDBRS() *api.MongoDB {
 						core.ResourceStorage: resource.MustParse("1Gi"),
 					},
 				},
-				StorageClassName: types.StringP(f.StorageClass),
+				StorageClassName: types.StringP(i.StorageClass),
 			},
 		},
 	}

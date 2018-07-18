@@ -246,7 +246,7 @@ func (c *Controller) upsertInstallInitContainer(statefulSet *apps.StatefulSet, m
 	installContainer := core.Container{
 		Name:            InitInstallContainerName,
 		Image:           c.docker.GetInitImage(),
-		ImagePullPolicy: core.PullAlways, //todo: ifNotPresent
+		ImagePullPolicy: core.PullIfNotPresent, //todo: ifNotPresent
 		Args:            []string{"--work-dir=/work-dir"},
 		VolumeMounts: []core.VolumeMount{
 			{

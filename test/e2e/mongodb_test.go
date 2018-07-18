@@ -54,6 +54,10 @@ var _ = Describe("MongoDB", func() {
 		err = f.CreateMongoDB(mongodb)
 		Expect(err).NotTo(HaveOccurred())
 
+		By("Create Test Service: " + mongodb.Name + framework.TestServiceSuffix)
+		err = f.CreateTestService(mongodb.ObjectMeta)
+		Expect(err).NotTo(HaveOccurred())
+
 		By("Wait for Running mongodb")
 		f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 	}
@@ -136,13 +140,6 @@ var _ = Describe("MongoDB", func() {
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
 
-					if mongodb.Spec.ClusterMode != nil &&
-						mongodb.Spec.ClusterMode.ReplicaSet != nil {
-						By("Checking Inserted Document in RS")
-						err := f.DocumentExistsInAllInstances(mongodb.ObjectMeta, dbName)
-						Expect(err).NotTo(HaveOccurred())
-					}
-
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
@@ -163,13 +160,6 @@ var _ = Describe("MongoDB", func() {
 
 					By("Checking Inserted Document")
 					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
-
-					if mongodb.Spec.ClusterMode != nil &&
-						mongodb.Spec.ClusterMode.ReplicaSet != nil {
-						By("Checking Inserted Document in RS")
-						err := f.DocumentExistsInAllInstances(mongodb.ObjectMeta, dbName)
-						Expect(err).NotTo(HaveOccurred())
-					}
 				}
 
 				It("should run successfully", shouldRunWithPVC)
