@@ -54,10 +54,6 @@ var _ = Describe("MongoDB", func() {
 		err = f.CreateMongoDB(mongodb)
 		Expect(err).NotTo(HaveOccurred())
 
-		By("Create Test Service: " + mongodb.Name + framework.TestServiceSuffix)
-		err = f.CreateTestService(mongodb.ObjectMeta)
-		Expect(err).NotTo(HaveOccurred())
-
 		By("Wait for Running mongodb")
 		f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 	}
@@ -135,10 +131,10 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
@@ -159,12 +155,12 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 				}
 
 				It("should run successfully", shouldRunWithPVC)
 
-				FContext("With Replica Set", func() {
+				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
 					})
@@ -421,7 +417,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 				})
 
 				Context("With Replica Set", func() {
@@ -443,7 +439,7 @@ var _ = Describe("MongoDB", func() {
 						createAndWaitForRunning()
 
 						By("Checking Inserted Document")
-						f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+						f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 					})
 				})
 
@@ -469,10 +465,10 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Create Secret")
 					f.CreateSecret(secret)
@@ -504,7 +500,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 				}
 
 				It("should run successfully", shouldInitializeSnapshot)
@@ -534,10 +530,10 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
@@ -571,7 +567,7 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					_, err = f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
@@ -585,10 +581,10 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
@@ -609,7 +605,7 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					_, err = f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
@@ -645,7 +641,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
@@ -666,7 +662,7 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					mg, err := f.GetMongoDB(mongodb.ObjectMeta)
 					Expect(err).NotTo(HaveOccurred())
@@ -709,10 +705,10 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Create Secret")
 					f.CreateSecret(secret)
@@ -744,7 +740,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Delete mongodb")
 					err = f.DeleteMongoDB(mongodb.ObjectMeta)
@@ -768,7 +764,7 @@ var _ = Describe("MongoDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					if usedInitSnapshot {
 						_, err = meta_util.GetString(mongodb.Annotations, api.AnnotationInitialized)
@@ -808,7 +804,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					for i := 0; i < 3; i++ {
 						By(fmt.Sprintf("%v-th", i+1) + " time running.")
@@ -834,7 +830,7 @@ var _ = Describe("MongoDB", func() {
 						Expect(err).NotTo(HaveOccurred())
 
 						By("Checking Inserted Document")
-						f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+						f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 						if usedInitScript {
 							Expect(mongodb.Spec.Init).ShouldNot(BeNil())
@@ -900,25 +896,6 @@ var _ = Describe("MongoDB", func() {
 					})
 
 					It("should run schedular successfully", shouldStartupSchedular)
-
-					Context("With Replica Set", func() {
-						BeforeEach(func() {
-							mongodb = f.MongoDBRS()
-							mongodb.Spec.BackupSchedule = &api.BackupScheduleSpec{
-								CronExpression: "@every 20s",
-								SnapshotStorageSpec: api.SnapshotStorageSpec{
-									StorageSecretName: secret.Name,
-									Local: &api.LocalSpec{
-										MountPath: "/repo",
-										VolumeSource: core.VolumeSource{
-											EmptyDir: &core.EmptyDirVolumeSource{},
-										},
-									},
-								},
-							}
-						})
-						It("should take Snapshot successfully", shouldStartupSchedular)
-					})
 				})
 
 				Context("with GCS", func() {
@@ -1046,10 +1023,10 @@ var _ = Describe("MongoDB", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					By("Insert Document Inside DB")
-					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyInsertDocument(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Count multiple Snapshot Object")
 					f.EventuallySnapshotCount(mongodb.ObjectMeta).Should(matcher.MoreThan(3))
@@ -1073,7 +1050,7 @@ var _ = Describe("MongoDB", func() {
 					f.EventuallyMongoDBRunning(mongodb.ObjectMeta).Should(BeTrue())
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					By("Count multiple Snapshot Object")
 					f.EventuallySnapshotCount(mongodb.ObjectMeta).Should(matcher.MoreThan(5))
@@ -1116,7 +1093,7 @@ var _ = Describe("MongoDB", func() {
 					}
 				})
 
-				It("should initialize database specified by env", func() {
+				var withAllowedEnvs = func() {
 					dbName = "envDB"
 					mongodb.Spec.Env = []core.EnvVar{
 						{
@@ -1129,14 +1106,33 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
+				}
+
+				It("should initialize database specified by env", withAllowedEnvs)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						mongodb.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									GitRepo: &core.GitRepoVolumeSource{
+										Repository: "https://github.com/kubedb/mongodb-init-scripts.git",
+										Directory:  ".",
+									},
+								},
+							},
+						}
+					})
+					It("should take Snapshot successfully", withAllowedEnvs)
 				})
 
 			})
 
 			Context("With forbidden Envs", func() {
 
-				It("should reject to create MongoDB crd", func() {
+				var withForbiddenEnvs = func() {
 
 					By("Create MongoDB with " + MONGO_INITDB_ROOT_USERNAME + " env var")
 					mongodb.Spec.Env = []core.EnvVar{
@@ -1157,6 +1153,15 @@ var _ = Describe("MongoDB", func() {
 					}
 					err = f.CreateMongoDB(mongodb)
 					Expect(err).To(HaveOccurred())
+				}
+
+				It("should reject to create MongoDB crd", withForbiddenEnvs)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+					})
+					It("should take Snapshot successfully", withForbiddenEnvs)
 				})
 			})
 
@@ -1174,7 +1179,8 @@ var _ = Describe("MongoDB", func() {
 					}
 				})
 
-				It("should initialize database specified by env", func() {
+				var withUpdateEnvs = func() {
+
 					dbName = "envDB"
 					mongodb.Spec.Env = []core.EnvVar{
 						{
@@ -1187,7 +1193,7 @@ var _ = Describe("MongoDB", func() {
 					createAndWaitForRunning()
 
 					By("Checking Inserted Document")
-					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, fmt.Sprintf("%v-0", mongodb.Name)).Should(BeTrue())
+					f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName).Should(BeTrue())
 
 					_, _, err = util.PatchMongoDB(f.ExtClient(), mongodb, func(in *api.MongoDB) *api.MongoDB {
 						in.Spec.Env = []core.EnvVar{
@@ -1200,6 +1206,26 @@ var _ = Describe("MongoDB", func() {
 					})
 
 					Expect(err).To(HaveOccurred())
+				}
+
+				It("should initialize database specified by env", withUpdateEnvs)
+
+				Context("With Replica Set", func() {
+					BeforeEach(func() {
+						mongodb = f.MongoDBRS()
+						mongodb.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									GitRepo: &core.GitRepoVolumeSource{
+										Repository: "https://github.com/kubedb/mongodb-init-scripts.git",
+										Directory:  ".",
+									},
+								},
+							},
+						}
+					})
+
+					It("should take Snapshot successfully", withUpdateEnvs)
 				})
 			})
 		})

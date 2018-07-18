@@ -22,7 +22,7 @@ type KubedbTable struct {
 	LastName           string
 }
 
-func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string, clientPodName string) (*bongo.Connection, error) {
+func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string) (*bongo.Connection, error) {
 	mongodb, err := f.GetMongoDB(meta)
 	if err != nil {
 		return nil, err
@@ -45,10 +45,10 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string, clie
 	return bongo.Connect(config)
 }
 
-func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName string, clientPodName string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			en, err := f.GetMongoDBClient(meta, dbName, clientPodName)
+			en, err := f.GetMongoDBClient(meta, dbName)
 			if err != nil {
 				fmt.Println("GetMongoDB Client error", err)
 				return false
@@ -77,10 +77,10 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 	)
 }
 
-func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName string, clientPodName string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			en, err := f.GetMongoDBClient(meta, dbName, clientPodName)
+			en, err := f.GetMongoDBClient(meta, dbName)
 			if err != nil {
 				fmt.Println("GetMongoDB Client error", err)
 				return false

@@ -63,15 +63,15 @@ func (f *Framework) GetNodePortIP(meta metav1.ObjectMeta) (string, error) {
 	return address, nil
 }
 
-func (i *Invocation) CreateTestService(meta metav1.ObjectMeta) error {
-	mongodb, err := i.GetMongoDB(meta)
+func (i *Invocation) CreateTestService(mongodbMeta metav1.ObjectMeta) error {
+	mongodb, err := i.GetMongoDB(mongodbMeta)
 	if err != nil {
 		return err
 	}
 
 	svcMeta := metav1.ObjectMeta{
-		Name:      mongodb.Name + TestServiceSuffix,
-		Namespace: mongodb.Namespace,
+		Name:      mongodbMeta.Name + TestServiceSuffix,
+		Namespace: mongodbMeta.Namespace,
 	}
 
 	ref, rerr := reference.GetReference(clientsetscheme.Scheme, mongodb)
@@ -85,7 +85,7 @@ func (i *Invocation) CreateTestService(meta metav1.ObjectMeta) error {
 		in.Spec.Type = core.ServiceTypeNodePort
 		in.Spec.Ports = core_util.MergeServicePorts(in.Spec.Ports, []core.ServicePort{
 			{
-				Name:       "db",
+				Name:       "db-test",
 				Protocol:   core.ProtocolTCP,
 				Port:       27017,
 				TargetPort: intstr.FromString("db"),
@@ -97,3 +97,16 @@ func (i *Invocation) CreateTestService(meta metav1.ObjectMeta) error {
 
 	return err
 }
+
+//func (f *Invocation) DeleteTestService(mongodbMeta metav1.ObjectMeta) error {
+//	svcMeta := metav1.ObjectMeta{
+//		Name:      mongodbMeta.Name + TestServiceSuffix,
+//		Namespace: mongodbMeta.Namespace,
+//	}
+//
+//	err := f.kubeClient.CoreV1().Services(svcMeta.Namespace).Delete(svcMeta.Name, deleteInForeground())
+//	if !kerr.IsNotFound(err) {
+//		return err
+//	}
+//	return nil
+//}
