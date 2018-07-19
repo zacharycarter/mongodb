@@ -135,6 +135,15 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 			},
 			Resources: mongodb.Spec.Resources,
 		})
+
+		in = c.upsertInstallInitContainer(in, mongodb)
+		if mongodb.Spec.ClusterMode != nil &&
+			mongodb.Spec.ClusterMode.ReplicaSet != nil {
+			in = c.upsertRSInitContainer(in, mongodb)
+			in = upsertRSArgs(in, mongodb)
+
+		}
+
 		if mongodb.GetMonitoringVendor() == mon_api.VendorPrometheus {
 			in.Spec.Template.Spec.Containers = core_util.UpsertContainer(in.Spec.Template.Spec.Containers, core.Container{
 				Name: "exporter",
@@ -176,17 +185,9 @@ func (c *Controller) createStatefulSet(mongodb *api.MongoDB) (*apps.StatefulSet,
 		in = upsertUserEnv(in, mongodb)
 		in = upsertDataVolume(in, mongodb)
 		in = addContainerProbe(in, mongodb)
-		in = c.upsertInstallInitContainer(in, mongodb)
 
 		if mongodb.Spec.ConfigSource != nil {
 			in = c.upsertConfigSourceVolume(in, mongodb)
-		}
-
-		if mongodb.Spec.ClusterMode != nil &&
-			mongodb.Spec.ClusterMode.ReplicaSet != nil {
-			in = c.upsertRSInitContainer(in, mongodb)
-			in = upsertRSArgs(in, mongodb)
-
 		}
 
 		if mongodb.Spec.Init != nil && mongodb.Spec.Init.ScriptSource != nil {
@@ -421,7 +422,13 @@ func upsertUserEnv(statefulSet *apps.StatefulSet, mongodb *api.MongoDB) *apps.St
 	for i, container := range statefulSet.Spec.Template.Spec.Containers {
 		if container.Name == api.ResourceSingularMongoDB {
 			statefulSet.Spec.Template.Spec.Containers[i].Env = core_util.UpsertEnvVars(container.Env, mongodb.Spec.Env...)
-			return statefulSet
+			break
+		}
+	}
+	for i, container := range statefulSet.Spec.Template.Spec.InitContainers {
+		if container.Name == InitBootstrapContainerName {
+			statefulSet.Spec.Template.Spec.InitContainers[i].Env = core_util.UpsertEnvVars(container.Env, mongodb.Spec.Env...)
+			break
 		}
 	}
 	return statefulSet

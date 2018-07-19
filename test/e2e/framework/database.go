@@ -72,8 +72,8 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 			}
 			return true
 		},
-		time.Minute*15,
-		time.Second*10,
+		time.Minute*5,
+		time.Second*5,
 	)
 }
 
@@ -100,7 +100,7 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 			}
 			return false
 		},
-		time.Minute*15,
-		time.Second*10,
+		time.Minute*5,
+		time.Second*5,
 	)
 }

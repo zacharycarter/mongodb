@@ -52,7 +52,7 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 		},
 		Spec: api.MongoDBSpec{
 			Version:  jsonTypes.StrYo(DBVersion),
-			Replicas: types.Int32P(3),
+			Replicas: types.Int32P(2),
 			ClusterMode: &api.MongoDBClusterMode{
 				ReplicaSet: &api.MongoDBReplicaSet{
 					Name: dbName,
@@ -72,12 +72,12 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 
 func (i *Invocation) CreateMongoDB(obj *api.MongoDB) error {
 	_, err := i.extClient.MongoDBs(obj.Namespace).Create(obj)
-	Expect(err).NotTo(HaveOccurred())
 
-	By("Create Test Service: " + obj.Name + TestServiceSuffix)
-	err = i.CreateTestService(obj.ObjectMeta)
-	Expect(err).NotTo(HaveOccurred())
-
+	if err == nil {
+		By("Create Test Service: " + obj.Name + TestServiceSuffix)
+		serr := i.CreateTestService(obj.ObjectMeta)
+		Expect(serr).NotTo(HaveOccurred())
+	}
 	return err
 }
 
@@ -110,7 +110,7 @@ func (f *Framework) EventuallyMongoDB(meta metav1.ObjectMeta) GomegaAsyncAsserti
 			}
 			return true
 		},
-		time.Minute*10,
+		time.Minute*5,
 		time.Second*5,
 	)
 }
@@ -122,7 +122,7 @@ func (f *Framework) EventuallyMongoDBRunning(meta metav1.ObjectMeta) GomegaAsync
 			Expect(err).NotTo(HaveOccurred())
 			return mongodb.Status.Phase == api.DatabasePhaseRunning
 		},
-		time.Minute*15,
+		time.Minute*10,
 		time.Second*5,
 	)
 }

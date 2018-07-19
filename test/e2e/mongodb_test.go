@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/appscode/go/types"
 	meta_util "github.com/appscode/kutil/meta"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
@@ -163,6 +164,7 @@ var _ = Describe("MongoDB", func() {
 				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
+						mongodb.Spec.Replicas = types.Int32P(3)
 					})
 					It("should run successfully", shouldRunWithPVC)
 				})
@@ -284,6 +286,7 @@ var _ = Describe("MongoDB", func() {
 				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
+						mongodb.Spec.Replicas = types.Int32P(3)
 						snapshot.Spec.DatabaseName = mongodb.Name
 					})
 					It("should take Snapshot successfully", shouldTakeSnapshot)
@@ -423,6 +426,7 @@ var _ = Describe("MongoDB", func() {
 				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
+						mongodb.Spec.Replicas = types.Int32P(3)
 						mongodb.Spec.Init = &api.InitSpec{
 							ScriptSource: &api.ScriptSourceSpec{
 								VolumeSource: core.VolumeSource{
@@ -680,6 +684,16 @@ var _ = Describe("MongoDB", func() {
 				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
+						mongodb.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									GitRepo: &core.GitRepoVolumeSource{
+										Repository: "https://github.com/kubedb/mongodb-init-scripts.git",
+										Directory:  ".",
+									},
+								},
+							},
+						}
 					})
 					It("should take Snapshot successfully", shouldResumeWithInit)
 				})
@@ -845,7 +859,16 @@ var _ = Describe("MongoDB", func() {
 				Context("With Replica Set", func() {
 					BeforeEach(func() {
 						mongodb = f.MongoDBRS()
-						snapshot.Spec.DatabaseName = mongodb.Name
+						mongodb.Spec.Init = &api.InitSpec{
+							ScriptSource: &api.ScriptSourceSpec{
+								VolumeSource: core.VolumeSource{
+									GitRepo: &core.GitRepoVolumeSource{
+										Repository: "https://github.com/kubedb/mongodb-init-scripts.git",
+										Directory:  ".",
+									},
+								},
+							},
+						}
 					})
 					It("should take Snapshot successfully", shouldResumeMultipleTimes)
 				})

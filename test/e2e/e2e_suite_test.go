@@ -25,6 +25,11 @@ import (
 	ka "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
+// To Run E2E tests:
+// - For selfhosted Operator: ./hack/make.py test e2e --selfhosted-operator=true (--storageclass=standard) (--ginkgo.flakeAttempts=2)
+// - For non selfhosted Operator: ./hack/make.py test e2e (--docker-registry=kubedb)
+// () => Optional
+
 var (
 	storageClass string
 

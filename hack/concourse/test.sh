@@ -115,4 +115,4 @@ cp creds/.env $GOPATH/src/github.com/kubedb/elasticsearch/hack/config/.env
 # run tests
 pushd $GOPATH/src/github.com/kubedb/elasticsearch
 source ./hack/deploy/setup.sh --docker-registry=kubedbci
-./hack/make.py test e2e --v=1 --storageclass=standard --selfhosted-operator=true
+./hack/make.py test e2e --v=1 --storageclass=standard --selfhosted-operator=true --ginkgo.flakeAttempts=2
