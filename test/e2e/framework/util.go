@@ -88,6 +88,7 @@ func (i *Invocation) CreateTestService(mongodbMeta metav1.ObjectMeta) error {
 				Name:       "db-test",
 				Protocol:   core.ProtocolTCP,
 				Port:       27017,
+				NodePort:   32757,
 				TargetPort: intstr.FromString("db"),
 			},
 		})
@@ -97,16 +98,3 @@ func (i *Invocation) CreateTestService(mongodbMeta metav1.ObjectMeta) error {
 
 	return err
 }
-
-//func (f *Invocation) DeleteTestService(mongodbMeta metav1.ObjectMeta) error {
-//	svcMeta := metav1.ObjectMeta{
-//		Name:      mongodbMeta.Name + TestServiceSuffix,
-//		Namespace: mongodbMeta.Namespace,
-//	}
-//
-//	err := f.kubeClient.CoreV1().Services(svcMeta.Namespace).Delete(svcMeta.Name, deleteInForeground())
-//	if !kerr.IsNotFound(err) {
-//		return err
-//	}
-//	return nil
-//}

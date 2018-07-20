@@ -36,8 +36,6 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string) (*bo
 	user := "root"
 	pass, err := f.GetMongoDBRootPassword(mongodb)
 
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>> 1", fmt.Sprintf("mongodb://%s:%s@%v", user, pass, nodePortIP))
-
 	config := &bongo.Config{
 		ConnectionString: fmt.Sprintf("mongodb://%s:%s@%v", user, pass, nodePortIP),
 		Database:         dbName,
