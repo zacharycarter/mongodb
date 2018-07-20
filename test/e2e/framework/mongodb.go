@@ -9,7 +9,6 @@ import (
 	"github.com/appscode/go/types"
 	api "github.com/kubedb/apimachinery/apis/kubedb/v1alpha1"
 	"github.com/kubedb/apimachinery/client/clientset/versioned/typed/kubedb/v1alpha1/util"
-	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -72,12 +71,12 @@ func (i *Invocation) MongoDBRS() *api.MongoDB {
 
 func (i *Invocation) CreateMongoDB(obj *api.MongoDB) error {
 	_, err := i.extClient.MongoDBs(obj.Namespace).Create(obj)
-
-	if err == nil {
-		By("Create Test Service: " + obj.Name + TestServiceSuffix)
-		serr := i.CreateTestService(obj.ObjectMeta)
-		Expect(serr).NotTo(HaveOccurred())
-	}
+	//
+	//if err == nil {
+	//	By("Create Test Service: " + obj.Name + TestServiceSuffix)
+	//	serr := i.CreateTestService(obj.ObjectMeta)
+	//	Expect(serr).NotTo(HaveOccurred())
+	//}
 	return err
 }
 

@@ -243,9 +243,11 @@ const (
 func Dial(url string) (*Session, error) {
 	session, err := DialWithTimeout(url, 10*time.Second)
 	if err == nil {
+fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 1 err",err)
 		session.SetSyncTimeout(1 * time.Minute)
 		session.SetSocketTimeout(1 * time.Minute)
 	}
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 1 <<")
 	return session, err
 }
 
@@ -258,8 +260,10 @@ func Dial(url string) (*Session, error) {
 func DialWithTimeout(url string, timeout time.Duration) (*Session, error) {
 	info, err := ParseURL(url)
 	if err != nil {
+		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 2 err",err)
 		return nil, err
 	}
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 2 <<<")
 	info.Timeout = timeout
 	return DialWithInfo(info)
 }
@@ -296,6 +300,7 @@ func ParseURL(url string) (*DialInfo, error) {
 			}
 		case "connect":
 			if v == "direct" {
+				fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 3")
 				direct = true
 				break
 			}
@@ -460,11 +465,13 @@ func DialWithInfo(info *DialInfo) (*Session, error) {
 	// established to any servers yet (e.g. what if url was wrong). So,
 	// ping the server to ensure there's someone there, and abort if it
 	// fails.
+	session.SetMode(Monotonic, true)
 	if err := session.Ping(); err != nil {
+		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 4 err",err)
 		session.Close()
 		return nil, err
 	}
-	session.SetMode(Strong, true)
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> 4 <<<")
 	return session, nil
 }
 

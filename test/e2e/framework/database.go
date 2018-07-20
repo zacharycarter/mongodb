@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/appscode/kutil/tools/portforward"
 	"github.com/globalsign/mgo/bson"
 	"github.com/go-bongo/bongo"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,33 +24,53 @@ type KubedbTable struct {
 	LastName           string
 }
 
-func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string) (*bongo.Connection, error) {
+func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string, clientPodName string) (*bongo.Connection, error) {
 	mongodb, err := f.GetMongoDB(meta)
 	if err != nil {
 		return nil, err
 	}
+	tunnel := portforward.NewTunnel(
+		f.kubeClient.CoreV1().RESTClient(),
+		f.restConfig,
+		mongodb.Namespace,
+		clientPodName,
+		27017,
+	)
 
-	nodePortIP, err := f.GetNodePortIP(meta)
-	if err != nil {
+	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err
 	}
-
 	user := "root"
 	pass, err := f.GetMongoDBRootPassword(mongodb)
 
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>> 1", fmt.Sprintf("mongodb://%s:%s@%v", user, pass, nodePortIP))
+	connectionUrl := fmt.Sprintf("mongodb://%s:%s@127.0.0.1:%v", user, pass, tunnel.Local)
+
+	if mongodb.Spec.ClusterMode != nil &&
+		mongodb.Spec.ClusterMode.ReplicaSet != nil {
+		connectionUrl += fmt.Sprintf("/?replicaSet=%v", mongodb.Spec.ClusterMode.ReplicaSet.Name)
+	}
+
+	//info := mgo.DialInfo{
+	//	Addrs:          []string{"localhost:40012"},
+	//	Timeout:        5 * time.Second,
+	//	ReplicaSetName: "rs1",
+	//}
+
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>", connectionUrl)
 
 	config := &bongo.Config{
-		ConnectionString: fmt.Sprintf("mongodb://%s:%s@%v", user, pass, nodePortIP),
+		ConnectionString: connectionUrl,
 		Database:         dbName,
 	}
+
 	return bongo.Connect(config)
+
 }
 
-func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName string, clientPodName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			en, err := f.GetMongoDBClient(meta, dbName)
+			en, err := f.GetMongoDBClient(meta, dbName, clientPodName)
 			if err != nil {
 				fmt.Println("GetMongoDB Client error", err)
 				return false
@@ -77,10 +99,10 @@ func (f *Framework) EventuallyInsertDocument(meta metav1.ObjectMeta, dbName stri
 	)
 }
 
-func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName string) GomegaAsyncAssertion {
+func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName string, clientPodName string) GomegaAsyncAssertion {
 	return Eventually(
 		func() bool {
-			en, err := f.GetMongoDBClient(meta, dbName)
+			en, err := f.GetMongoDBClient(meta, dbName, clientPodName)
 			if err != nil {
 				fmt.Println("GetMongoDB Client error", err)
 				return false
@@ -103,4 +125,22 @@ func (f *Framework) EventuallyDocumentExists(meta metav1.ObjectMeta, dbName stri
 		time.Minute*5,
 		time.Second*5,
 	)
+}
+
+func (f *Framework) DocumentExistsInAllInstances(meta metav1.ObjectMeta, dbName string) error {
+	mongodb, err := f.GetMongoDB(meta)
+	if err != nil {
+		return err
+	}
+	replica := int32(0)
+	if mongodb.Spec.Replicas != nil {
+		replica = *mongodb.Spec.Replicas
+	}
+	for i := int32(0); i < replica; i++ {
+		clientPodName := fmt.Sprintf("%v-%v", meta.Name, i)
+		By("Checking Inserted Document in RS " + clientPodName)
+		f.EventuallyDocumentExists(mongodb.ObjectMeta, dbName, clientPodName).Should(BeTrue())
+	}
+
+	return nil
 }
