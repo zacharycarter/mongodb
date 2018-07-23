@@ -53,7 +53,8 @@ USER nobody:nobody
 ENTRYPOINT ["mg-operator"]
 EOL
   local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
-  echo $cmd; $cmd
+  echo $cmd
+  $cmd
 
   rm mg-operator Dockerfile
   popd

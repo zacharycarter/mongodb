@@ -63,12 +63,12 @@ if [ "$KUBEDB_UNINSTALL" -eq 1 ]; then
 
   echo "waiting for kubedb operator pod to stop running"
   for (( ; ; )); do
-     pods=($(kubectl get pods --all-namespaces -l app=kubedb -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
-     total=${#pods[*]}
-      if [ $total -eq 0 ] ; then
-          break
-      fi
-     sleep 2
+    pods=($(kubectl get pods --all-namespaces -l app=kubedb -o jsonpath='{range .items[*]}{.metadata.name} {end}'))
+    total=${#pods[*]}
+    if [ $total -eq 0 ]; then
+      break
+    fi
+    sleep 2
   done
 
   # https://github.com/kubernetes/kubernetes/issues/60538

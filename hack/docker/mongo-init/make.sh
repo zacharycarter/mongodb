@@ -14,12 +14,13 @@ TAG="latest"
 TAG_STRATEGY=${TAG_STRATEGY:-}
 
 build() {
-    pushd "$REPO_ROOT/hack/docker/mongo-init"
+  pushd "$REPO_ROOT/hack/docker/mongo-init"
 
-    local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
-    echo $cmd; $cmd
+  local cmd="docker build -t $DOCKER_REGISTRY/$IMG:$TAG ."
+  echo $cmd
+  $cmd
 
-    popd
+  popd
 }
 
 binary_repo $@
