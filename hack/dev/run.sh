@@ -25,32 +25,32 @@ show_help() {
 
 while test $# -gt 0; do
   case "$1" in
-  -h | --help)
-    show_help
-    exit 0
-    ;;
-  --minikube)
-    export MINIKUBE=1
-    export SELF_HOSTED=0
-    shift
-    ;;
-  --selfhosted)
-    export MINIKUBE=0
-    export SELF_HOSTED=1
-    shift
-    ;;
-  --uninstall)
-    export KUBEDB_UNINSTALL=1
-    shift
-    ;;
-  --purge)
-    export KUBEDB_PURGE=1
-    shift
-    ;;
-  *)
-    show_help
-    exit 1
-    ;;
+    -h | --help)
+      show_help
+      exit 0
+      ;;
+    --minikube)
+      export MINIKUBE=1
+      export SELF_HOSTED=0
+      shift
+      ;;
+    --selfhosted)
+      export MINIKUBE=0
+      export SELF_HOSTED=1
+      shift
+      ;;
+    --uninstall)
+      export KUBEDB_UNINSTALL=1
+      shift
+      ;;
+    --purge)
+      export KUBEDB_PURGE=1
+      shift
+      ;;
+    *)
+      show_help
+      exit 1
+      ;;
   esac
 done
 
