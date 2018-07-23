@@ -17,16 +17,8 @@ const (
 	snapshotProcessBackup  = "backup"
 )
 
-func GetHostName(mongodb *api.MongoDB) string {
-	//if mongodb.Spec.ClusterMode != nil &&
-	//	mongodb.Spec.ClusterMode.ReplicaSet != nil {
-	//	return mongodb.Spec.ClusterMode.ReplicaSet.Name + "/" + mongodb.ServiceName()
-	//}
-	return mongodb.ServiceName()
-}
-
 func (c *Controller) createRestoreJob(mongodb *api.MongoDB, snapshot *api.Snapshot) (*batch.Job, error) {
-	databaseHost := GetHostName(mongodb)
+	databaseHost := mongodb.ServiceName()
 	jobName := fmt.Sprintf("%s-%s", api.DatabaseNamePrefix, snapshot.OffshootName())
 	jobLabel := map[string]string{
 		api.LabelDatabaseKind: api.ResourceKindMongoDB,
@@ -168,7 +160,7 @@ func (c *Controller) getSnapshotterJob(snapshot *api.Snapshot) (*batch.Job, erro
 	if err != nil {
 		return nil, err
 	}
-	databaseHost := GetHostName(mongodb)
+	databaseHost := mongodb.ServiceName()
 
 	// Get PersistentVolume object for Backup Util pod.
 	persistentVolume, err := c.getVolumeForSnapshot(mongodb.Spec.Storage, jobName, snapshot.Namespace)

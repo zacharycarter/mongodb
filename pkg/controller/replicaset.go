@@ -35,7 +35,7 @@ func (c *Controller) upsertRSInitContainer(statefulSet *apps.StatefulSet, mongod
 	bootstrapContainer := core.Container{
 		Name:            InitBootstrapContainerName,
 		Image:           c.docker.GetImageWithTag(mongodb),
-		ImagePullPolicy: core.PullAlways, //todo: ifNotPresent
+		ImagePullPolicy: core.PullIfNotPresent,
 		Command:         []string{"/work-dir/peer-finder"},
 		Args:            []string{"-on-start=/work-dir/on-start.sh", "-service=" + c.GoverningService},
 		Env: []core.EnvVar{
