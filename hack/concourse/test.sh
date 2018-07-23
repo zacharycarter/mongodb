@@ -110,9 +110,9 @@ kubectl get storageclass
 
 # create config/.env file that have all necessary creds
 cp creds/gcs.json /gcs.json
-cp creds/.env $GOPATH/src/github.com/kubedb/elasticsearch/hack/config/.env
+cp creds/.env $GOPATH/src/github.com/kubedb/mongodb/hack/config/.env
 
 # run tests
-pushd $GOPATH/src/github.com/kubedb/elasticsearch
+pushd $GOPATH/src/github.com/kubedb/mongodb
 source ./hack/deploy/setup.sh --docker-registry=kubedbci
 ./hack/make.py test e2e --v=1 --storageclass=standard --selfhosted-operator=true --ginkgo.flakeAttempts=2
