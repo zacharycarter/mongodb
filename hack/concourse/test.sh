@@ -47,12 +47,12 @@ function cleanup() {
   kubectl describe nodes
 
   # delete cluster on exit
-#  pharmer get cluster
-#  pharmer delete cluster $NAME
-#  pharmer get cluster
-#  sleep 120
-#  pharmer apply $NAME
-#  pharmer get cluster
+  pharmer get cluster
+  pharmer delete cluster $NAME
+  pharmer get cluster
+  sleep 120
+  pharmer apply $NAME
+  pharmer get cluster
 
   # delete docker image on exit
   curl -LO https://raw.githubusercontent.com/appscodelabs/libbuild/master/docker.py
