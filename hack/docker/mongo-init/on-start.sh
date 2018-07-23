@@ -2,9 +2,6 @@
 
 # ref: https://github.com/kubernetes/charts/blob/master/stable/mongodb-replicaset/init/on-start.sh
 
-set -x # todo: delete
-echo ">>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<"
-
 replica_set="$REPLICA_SET"
 script_name=${0##*/}
 
