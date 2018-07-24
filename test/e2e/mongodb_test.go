@@ -73,11 +73,15 @@ var _ = Describe("MongoDB", func() {
 			Expect(err).NotTo(HaveOccurred())
 		}
 
+		By("Delete Test Service if exists")
+		err := f.DeleteTestService(mongodb.ObjectMeta)
+		Expect(err).NotTo(HaveOccurred())
+
 		By("Wait for mongodb to be paused")
 		f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
 
 		By("Set DormantDatabase Spec.WipeOut to true")
-		_, err := f.PatchDormantDatabase(mongodb.ObjectMeta, func(in *api.DormantDatabase) *api.DormantDatabase {
+		_, err = f.PatchDormantDatabase(mongodb.ObjectMeta, func(in *api.DormantDatabase) *api.DormantDatabase {
 			in.Spec.WipeOut = true
 			return in
 		})

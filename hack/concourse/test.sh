@@ -89,6 +89,10 @@ pharmer create cluster $NAME --provider=digitalocean --zone=nyc1 --nodes=2gb=1 -
 pharmer apply $NAME
 pharmer use cluster $NAME
 #wait for cluster to be ready
+
+cowsay -f tux  ".kube/config"
+cat $HOME/.kube/config || true
+
 sleep 300
 kubectl get nodes
 

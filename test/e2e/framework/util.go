@@ -8,6 +8,7 @@ import (
 
 	core_util "github.com/appscode/kutil/core/v1"
 	core "k8s.io/api/core/v1"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
@@ -96,4 +97,12 @@ func (i *Invocation) CreateTestService(mongodbMeta metav1.ObjectMeta) error {
 	})
 
 	return err
+}
+
+func (i *Invocation) DeleteTestService(meta metav1.ObjectMeta) error {
+	err := i.kubeClient.CoreV1().Services(meta.Namespace).Delete(meta.Name+TestServiceSuffix, deleteInForeground())
+	if err != nil && !kerr.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
