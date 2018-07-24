@@ -1018,7 +1018,7 @@ var _ = Describe("MongoDB", func() {
 				})
 			})
 
-			Context("Re-Use DormantDatabase's scheduler", func() {
+			FContext("Re-Use DormantDatabase's scheduler", func() {
 				BeforeEach(func() {
 					secret = f.SecretForLocalBackend()
 				})
@@ -1103,7 +1103,7 @@ var _ = Describe("MongoDB", func() {
 			})
 		})
 
-		Context("Environment Variables", func() {
+		FContext("Environment Variables", func() {
 
 			Context("With allowed Envs", func() {
 				BeforeEach(func() {
