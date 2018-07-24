@@ -73,9 +73,9 @@ var _ = Describe("MongoDB", func() {
 			Expect(err).NotTo(HaveOccurred())
 		}
 
-		By("Delete Test Service if exists")
-		err := f.DeleteTestService(mongodb.ObjectMeta)
-		Expect(err).NotTo(HaveOccurred())
+		//By("Delete Test Service if exists")
+		//err := f.DeleteTestService(mongodb.ObjectMeta)
+		//Expect(err).NotTo(HaveOccurred())
 
 		By("Wait for mongodb to be paused")
 		f.EventuallyDormantDatabaseStatus(mongodb.ObjectMeta).Should(matcher.HavePaused())
@@ -375,7 +375,6 @@ var _ = Describe("MongoDB", func() {
 						}
 					})
 				})
-
 			})
 
 			Context("In Azure", func() {

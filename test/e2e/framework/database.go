@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/appscode/kutil/tools/portforward"
 	"github.com/globalsign/mgo/bson"
 	"github.com/go-bongo/bongo"
 	. "github.com/onsi/gomega"
@@ -27,17 +28,23 @@ func (f *Framework) GetMongoDBClient(meta metav1.ObjectMeta, dbName string) (*bo
 	if err != nil {
 		return nil, err
 	}
+	clientPodName := fmt.Sprintf("%v-0", mongodb.Name)
+	tunnel := portforward.NewTunnel(
+		f.kubeClient.CoreV1().RESTClient(),
+		f.restConfig,
+		mongodb.Namespace,
+		clientPodName,
+		27017,
+	)
 
-	nodePortIP, err := f.GetNodePortIP(meta)
-	if err != nil {
+	if err := tunnel.ForwardPort(); err != nil {
 		return nil, err
 	}
-
 	user := "root"
 	pass, err := f.GetMongoDBRootPassword(mongodb)
 
 	config := &bongo.Config{
-		ConnectionString: fmt.Sprintf("mongodb://%s:%s@%v", user, pass, nodePortIP),
+		ConnectionString: fmt.Sprintf("mongodb://%s:%s@127.0.0.1:%v", user, pass, tunnel.Local),
 		Database:         dbName,
 	}
 	return bongo.Connect(config)
